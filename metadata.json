@@ -1,0 +1,6 @@
+{
+  "name": "Nithix NIFTY Desk",
+  "description": "Institutional-Grade Multi-Agent AI Trading Intelligence for NIFTY 50 Futures and Options",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
