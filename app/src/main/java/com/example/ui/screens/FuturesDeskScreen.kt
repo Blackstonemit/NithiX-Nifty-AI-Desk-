@@ -30,10 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.FuturesData
 import com.example.model.MarketBias
 import com.example.ui.theme.LocalChartPalette
@@ -60,7 +62,7 @@ fun FuturesDeskScreen(
             Icon(Icons.Default.Assessment, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "FUTURES & INSTITUTIONAL (FII/DII) DESK",
+                text = stringResource(R.string.futures_desk_title),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = palette.textPrimary,
@@ -80,21 +82,23 @@ fun FuturesDeskScreen(
             colors = CardDefaults.cardColors(containerColor = palette.surface)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text(text = "NIFTY FUTURES CONTRACTS (NSE)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textSecondary)
+                Text(text = stringResource(R.string.futures_contracts_header), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textSecondary)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Column {
-                        Text(text = "NEAR MONTH (${futures.currentMonthExpiry})", fontSize = 10.sp, color = palette.textMuted)
+                        Text(text = stringResource(R.string.futures_near_month_format, futures.currentMonthExpiry), fontSize = 10.sp, color = palette.textMuted)
                         Text(
-                            text = "₹${String.format(Locale.US, "%,.2f", futures.currentMonthPrice)}",
+                            text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", futures.currentMonthPrice)),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = palette.textPrimary,
                             fontFamily = FontFamily.Monospace
                         )
+                        val basisFormatted = "${if (futures.basis >= 0) "+" else ""}${String.format(Locale.US, "%.1f", futures.basis)}"
+                        val basisKind = stringResource(if (futures.basis > 0) R.string.futures_premium else R.string.futures_discount)
                         Text(
-                            text = "Basis: ${if (futures.basis >= 0) "+" else ""}${String.format(Locale.US, "%.1f", futures.basis)} pts (${if (futures.basis > 0) "Premium" else "Discount"})",
+                            text = stringResource(R.string.futures_basis_format, basisFormatted, basisKind),
                             fontSize = 11.sp,
                             color = if (futures.basis >= 0) palette.bullGreen else palette.bearRed,
                             fontWeight = FontWeight.Bold
@@ -102,16 +106,16 @@ fun FuturesDeskScreen(
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "NEXT MONTH (${futures.nextMonthExpiry})", fontSize = 10.sp, color = palette.textMuted)
+                        Text(text = stringResource(R.string.futures_next_month_format, futures.nextMonthExpiry), fontSize = 10.sp, color = palette.textMuted)
                         Text(
-                            text = "₹${String.format(Locale.US, "%,.2f", futures.nextMonthPrice)}",
+                            text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", futures.nextMonthPrice)),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = palette.textPrimary,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "Roll Spread: +₹${String.format(Locale.US, "%.1f", futures.nextMonthPrice - futures.currentMonthPrice)}",
+                            text = stringResource(R.string.futures_roll_spread_format, String.format(Locale.US, "%.1f", futures.nextMonthPrice - futures.currentMonthPrice)),
                             fontSize = 11.sp,
                             color = palette.accentCyan
                         )
@@ -130,11 +134,11 @@ fun FuturesDeskScreen(
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column {
-                            Text(text = "CURRENT BUILDUP STRUCTURE", fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
+                            Text(text = stringResource(R.string.futures_buildup_header), fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
                             Text(text = futures.currentMonthBuildup.label, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = if (futures.currentMonthBuildup.name.contains("LONG")) palette.bullGreen else palette.bearRed)
                         }
                         Text(
-                            text = "OI: ${String.format(Locale.US, "%,d", futures.currentMonthOi)} contracts",
+                            text = stringResource(R.string.futures_oi_contracts_format, String.format(Locale.US, "%,d", futures.currentMonthOi)),
                             fontSize = 11.sp,
                             color = palette.textSecondary,
                             fontFamily = FontFamily.Monospace
@@ -158,15 +162,25 @@ fun FuturesDeskScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.BusinessCenter, contentDescription = null, tint = palette.goldAccent, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "FII & DII INSTITUTIONAL PARTICIPATION", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
+                    Text(text = stringResource(R.string.futures_fii_dii_header), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // FII Long vs Short Bar
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "FII Index Long: ${String.format(Locale.US, "%.1f%%", futures.fiiNetRatio)}", fontSize = 11.sp, color = palette.bullGreen, fontWeight = FontWeight.Bold)
-                    Text(text = "FII Short: ${String.format(Locale.US, "%.1f%%", 100.0 - futures.fiiNetRatio)}", fontSize = 11.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.futures_fii_long_pct_format, String.format(Locale.US, "%.1f", futures.fiiNetRatio)),
+                        fontSize = 11.sp,
+                        color = palette.bullGreen,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.futures_fii_short_pct_format, String.format(Locale.US, "%.1f", 100.0 - futures.fiiNetRatio)),
+                        fontSize = 11.sp,
+                        color = palette.bearRed,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 LinearProgressIndicator(
@@ -182,8 +196,18 @@ fun FuturesDeskScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "FII Long Contracts: ${String.format(Locale.US, "%,d", futures.fiiLongContracts)}", fontSize = 10.sp, color = palette.textSecondary, fontFamily = FontFamily.Monospace)
-                    Text(text = "Short: ${String.format(Locale.US, "%,d", futures.fiiShortContracts)}", fontSize = 10.sp, color = palette.textSecondary, fontFamily = FontFamily.Monospace)
+                    Text(
+                        text = stringResource(R.string.futures_fii_long_contracts_format, String.format(Locale.US, "%,d", futures.fiiLongContracts)),
+                        fontSize = 10.sp,
+                        color = palette.textSecondary,
+                        fontFamily = FontFamily.Monospace
+                    )
+                    Text(
+                        text = stringResource(R.string.futures_fii_short_contracts_format, String.format(Locale.US, "%,d", futures.fiiShortContracts)),
+                        fontSize = 10.sp,
+                        color = palette.textSecondary,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -197,9 +221,13 @@ fun FuturesDeskScreen(
                         .padding(10.dp)
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "DII Net Market Flow:", fontSize = 11.sp, color = palette.textSecondary)
+                        Text(text = stringResource(R.string.futures_dii_net_flow_label), fontSize = 11.sp, color = palette.textSecondary)
                         Text(
-                            text = "${if (futures.diiNetActivityCr >= 0) "+" else ""}₹${String.format(Locale.US, "%,.1f", futures.diiNetActivityCr)} Cr",
+                            text = stringResource(
+                                R.string.futures_dii_net_flow_value_format,
+                                if (futures.diiNetActivityCr >= 0) "+" else "",
+                                String.format(Locale.US, "%,.1f", futures.diiNetActivityCr)
+                            ),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (futures.diiNetActivityCr >= 0) palette.bullGreen else palette.bearRed,

@@ -37,10 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.AgentReport
 import com.example.model.MarketBias
 import com.example.ui.theme.LocalChartPalette
@@ -68,7 +70,7 @@ fun MultiAgentDeskScreen(
             Icon(Icons.Default.Psychology, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "MULTI-AGENT AI DELIBERATION DESK",
+                text = stringResource(R.string.agents_desk_title),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = palette.textPrimary,
@@ -78,7 +80,7 @@ fun MultiAgentDeskScreen(
         }
 
         Text(
-            text = "Reconciles 8 domain specialist agents with strict cross-validation and weighted consensus.",
+            text = stringResource(R.string.agents_desk_subtitle),
             fontSize = 11.sp,
             color = palette.textSecondary
         )
@@ -92,7 +94,7 @@ fun MultiAgentDeskScreen(
         }
 
         Text(
-            text = "SPECIALIZED DOMAIN AGENTS",
+            text = stringResource(R.string.agents_specialized_header),
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textMuted,
@@ -137,7 +139,7 @@ private fun CentralAgentCard(agent: AgentReport) {
                             .background(palette.accentCyan)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(text = "AGENT 9", fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                        Text(text = stringResource(R.string.agents_badge_agent_9), fontSize = 10.sp, fontWeight = FontWeight.Black, color = Color.Black)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = agent.agentName, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
@@ -169,8 +171,8 @@ private fun CentralAgentCard(agent: AgentReport) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Consensus Confidence", fontSize = 10.sp, color = palette.textSecondary)
-                Text(text = "${agent.confidence}%", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, fontFamily = FontFamily.Monospace)
+                Text(text = stringResource(R.string.agents_consensus_confidence), fontSize = 10.sp, color = palette.textSecondary)
+                Text(text = stringResource(R.string.agents_pct_format, agent.confidence), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, fontFamily = FontFamily.Monospace)
             }
             Spacer(modifier = Modifier.height(4.dp))
             LinearProgressIndicator(
@@ -194,7 +196,7 @@ private fun CentralAgentCard(agent: AgentReport) {
                     .padding(10.dp)
             ) {
                 agent.keyFindings.forEach { finding ->
-                    Text(text = "• $finding", fontSize = 11.sp, color = palette.textSecondary, lineHeight = 15.sp)
+                    Text(text = stringResource(R.string.agents_bullet_format, finding), fontSize = 11.sp, color = palette.textSecondary, lineHeight = 15.sp)
                     Spacer(modifier = Modifier.height(4.dp))
                 }
             }
@@ -240,12 +242,12 @@ private fun AgentAccordionItem(
                             .background(palette.surfaceHighlight)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(text = "A${agent.agentId}", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, fontFamily = FontFamily.Monospace)
+                        Text(text = stringResource(R.string.agents_id_badge_format, agent.agentId), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, fontFamily = FontFamily.Monospace)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(text = agent.agentName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
-                        Text(text = "Weight: ${agent.weightPct}% | ${agent.agentRole}", fontSize = 9.sp, color = palette.textMuted)
+                        Text(text = stringResource(R.string.agents_weight_role_format, agent.weightPct, agent.agentRole), fontSize = 9.sp, color = palette.textMuted)
                     }
                 }
 
@@ -274,15 +276,15 @@ private fun AgentAccordionItem(
             // Expanded Findings & Metrics
             AnimatedVisibility(visible = expanded) {
                 Column(modifier = Modifier.padding(top = 10.dp)) {
-                    Text(text = "KEY FINDINGS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan)
+                    Text(text = stringResource(R.string.agents_key_findings), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan)
                     Spacer(modifier = Modifier.height(4.dp))
                     agent.keyFindings.forEach { f ->
-                        Text(text = "• $f", fontSize = 10.sp, color = palette.textSecondary, lineHeight = 14.sp)
+                        Text(text = stringResource(R.string.agents_bullet_format, f), fontSize = 10.sp, color = palette.textSecondary, lineHeight = 14.sp)
                         Spacer(modifier = Modifier.height(2.dp))
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "RAW METRICS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan)
+                    Text(text = stringResource(R.string.agents_raw_metrics), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan)
                     Spacer(modifier = Modifier.height(4.dp))
                     agent.rawMetrics.forEach { (k, v) ->
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

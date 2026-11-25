@@ -53,10 +53,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.engine.chart.TimeframeAggregationEngine
 import com.example.model.ChartType
 import com.example.model.DateRangePreset
@@ -148,7 +150,7 @@ fun ChartWorkstationScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back to Dashboard",
+                        contentDescription = stringResource(R.string.cd_back_to_dashboard),
                         tint = palette.textPrimary
                     )
                 }
@@ -161,7 +163,8 @@ fun ChartWorkstationScreen(
                         .background(palette.accentCyanDim)
                         .border(1.dp, palette.accentCyan.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
                         .clickable { showWatchlistDialog = true }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     val lastClose = state.candles.lastOrNull()?.close ?: 0.0
                     Column {
@@ -175,7 +178,7 @@ fun ChartWorkstationScreen(
                             style = TabularNumericStyle
                         )
                         Text(
-                            text = if (lastClose > 0) "₹${String.format(Locale.US, "%,.2f", lastClose)}" else state.activeSymbol.displayName,
+                            text = if (lastClose > 0) stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", lastClose)) else state.activeSymbol.displayName,
                             fontSize = 10.sp,
                             color = palette.textPrimary,
                             style = TabularNumericStyle
@@ -188,7 +191,7 @@ fun ChartWorkstationScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = if (state.dataFreshness.isRealTime) "LIVE" else "REF/DEL",
+                            text = stringResource(if (state.dataFreshness.isRealTime) R.string.badge_live else R.string.workstation_badge_ref_del),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = if (state.dataFreshness.isRealTime) palette.bullGreen else palette.goldAccent,
@@ -196,7 +199,7 @@ fun ChartWorkstationScreen(
                         )
                         if (state.showCountdown) {
                             Text(
-                                text = "⏱ $countdownText",
+                                text = stringResource(R.string.workstation_countdown_format, countdownText),
                                 fontSize = 9.sp,
                                 color = palette.textSecondary,
                                 style = TabularNumericStyle
@@ -204,7 +207,11 @@ fun ChartWorkstationScreen(
                         }
                     }
                     Text(
-                        text = "${state.dataFreshness.sourceLabel} · ${if (state.isAdjustedPrices) "Adj" else "Unadj"}",
+                        text = stringResource(
+                            R.string.workstation_source_adj_format,
+                            state.dataFreshness.sourceLabel,
+                            stringResource(if (state.isAdjustedPrices) R.string.workstation_adj else R.string.workstation_unadj)
+                        ),
                         fontSize = 9.sp,
                         color = palette.textMuted,
                         maxLines = 1,
@@ -225,13 +232,13 @@ fun ChartWorkstationScreen(
                     onClick = { coordinator.fetchActiveSymbolCandles() },
                     modifier = Modifier.minimumInteractiveComponentSize()
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Refresh OHLCV", tint = palette.accentCyan, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_refresh_ohlcv), tint = palette.accentCyan, modifier = Modifier.size(18.dp))
                 }
                 IconButton(
                     onClick = { showLayoutsDialog = true },
                     modifier = Modifier.minimumInteractiveComponentSize().testTag("workstation_layouts_button")
                 ) {
-                    Icon(Icons.Default.BookmarkBorder, contentDescription = "Saved Layouts", tint = palette.goldAccent, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.BookmarkBorder, contentDescription = stringResource(R.string.cd_saved_layouts), tint = palette.goldAccent, modifier = Modifier.size(18.dp))
                 }
                 IconButton(
                     onClick = {
@@ -241,11 +248,11 @@ fun ChartWorkstationScreen(
                             symbol = state.activeSymbol.symbol,
                             timeframeLabel = state.timeframe.label
                         )
-                        snapshotFeedback = res.getOrElse { it.message ?: "Snapshot exported" }
+                        snapshotFeedback = res.getOrElse { it.message ?: context.getString(R.string.workstation_snapshot_exported) }
                     },
                     modifier = Modifier.minimumInteractiveComponentSize().testTag("workstation_snapshot_button")
                 ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Export Snapshot PNG", tint = palette.textSecondary, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.CameraAlt, contentDescription = stringResource(R.string.cd_export_snapshot_png), tint = palette.textSecondary, modifier = Modifier.size(18.dp))
                 }
                 IconButton(
                     onClick = { coordinator.toggleThemeMode() },
@@ -253,7 +260,7 @@ fun ChartWorkstationScreen(
                 ) {
                     Icon(
                         imageVector = if (state.themeMode == ChartThemeMode.FINANCIAL_DARK) Icons.Default.LightMode else Icons.Default.DarkMode,
-                        contentDescription = "Toggle Chart Theme",
+                        contentDescription = stringResource(R.string.cd_toggle_chart_theme),
                         tint = palette.goldAccent,
                         modifier = Modifier.size(18.dp)
                     )
@@ -341,7 +348,7 @@ fun ChartWorkstationScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Draw, contentDescription = null, tint = if (showDrawingToolbar) onAccent else palette.textPrimary, modifier = Modifier.size(12.dp))
                         Spacer(Modifier.width(3.dp))
-                        Text("Draw", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (showDrawingToolbar) onAccent else palette.textPrimary)
+                        Text(stringResource(R.string.workstation_draw), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (showDrawingToolbar) onAccent else palette.textPrimary)
                     }
                 }
             }
@@ -359,7 +366,7 @@ fun ChartWorkstationScreen(
                         .border(1.dp, palette.border, RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
-                    Icon(Icons.Default.ZoomIn, contentDescription = "Zoom In", tint = palette.textPrimary, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.ZoomIn, contentDescription = stringResource(R.string.cd_zoom_in), tint = palette.textPrimary, modifier = Modifier.size(14.dp))
                 }
             }
             Box(
@@ -375,7 +382,7 @@ fun ChartWorkstationScreen(
                         .border(1.dp, palette.border, RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
-                    Icon(Icons.Default.ZoomOut, contentDescription = "Zoom Out", tint = palette.textPrimary, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.ZoomOut, contentDescription = stringResource(R.string.cd_zoom_out), tint = palette.textPrimary, modifier = Modifier.size(14.dp))
                 }
             }
             Box(
@@ -391,7 +398,7 @@ fun ChartWorkstationScreen(
                         .border(1.dp, palette.border, RoundedCornerShape(6.dp))
                         .padding(horizontal = 6.dp, vertical = 4.dp)
                 ) {
-                    Icon(Icons.Default.FitScreen, contentDescription = "Fit All", tint = palette.accentCyan, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.FitScreen, contentDescription = stringResource(R.string.workstation_fit_all), tint = palette.accentCyan, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -664,7 +671,7 @@ private fun InspectorContentRouter(
         )
         WorkstationInspectorTab.RISK -> RiskCalculatorPanel(
             state = state,
-            onUpdateRisk = { cap, pct, rr, sl, clr, show -> coordinator.updateRiskInputs(cap, pct, rr, sl, clr, show) }
+            onUpdateRisk = { cap, pct, rr, sl, clr, show, lot -> coordinator.updateRiskInputs(cap, pct, rr, sl, clr, show, lot) }
         )
         WorkstationInspectorTab.BACKTEST -> BacktestLabPanel(
             state = state,

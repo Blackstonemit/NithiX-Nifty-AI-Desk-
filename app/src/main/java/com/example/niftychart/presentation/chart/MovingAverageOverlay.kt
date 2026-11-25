@@ -47,35 +47,36 @@ fun MovingAverageOverlay(
             val values = smaLines[sma] ?: continue
             if (values.isEmpty()) continue
 
-            val path = Path()
-            var hasStarted = false
+            val path = Path().apply {
+                var hasStarted = false
 
-            for (localIdx in 0 until visibleCount) {
-                val globalIdx = viewport.startIndex + localIdx
-                val smaValue = values.getOrNull(globalIdx)
-                if (smaValue == null || !smaValue.isFinite()) {
-                    hasStarted = false
-                    continue
-                }
+                repeat(visibleCount) { localIdx ->
+                    val globalIdx = viewport.startIndex + localIdx
+                    val smaValue = values.getOrNull(globalIdx)
+                    if (smaValue == null || !smaValue.isFinite()) {
+                        hasStarted = false
+                        return@repeat
+                    }
 
-                val x = ChartScaleCalculator.visibleIndexToCenterX(
-                    visibleIndex = localIdx,
-                    visibleCount = visibleCount,
-                    plotLeftPx = plotLeft,
-                    plotWidthPx = plotWidth
-                )
-                val y = ChartScaleCalculator.priceToY(
-                    price = smaValue,
-                    bounds = priceBounds,
-                    topPx = plotTop,
-                    plotHeightPx = plotHeight
-                ).coerceIn(plotTop, plotBottom)
+                    val x = ChartScaleCalculator.visibleIndexToCenterX(
+                        visibleIndex = localIdx,
+                        visibleCount = visibleCount,
+                        plotLeftPx = plotLeft,
+                        plotWidthPx = plotWidth
+                    )
+                    val y = ChartScaleCalculator.priceToY(
+                        price = smaValue,
+                        bounds = priceBounds,
+                        topPx = plotTop,
+                        plotHeightPx = plotHeight
+                    ).coerceIn(plotTop, plotBottom)
 
-                if (!hasStarted) {
-                    path.moveTo(x, y)
-                    hasStarted = true
-                } else {
-                    path.lineTo(x, y)
+                    if (!hasStarted) {
+                        moveTo(x, y)
+                        hasStarted = true
+                    } else {
+                        lineTo(x, y)
+                    }
                 }
             }
 

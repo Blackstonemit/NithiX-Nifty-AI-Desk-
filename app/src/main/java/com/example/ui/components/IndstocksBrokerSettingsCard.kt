@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.IndstocksBrokerState
 import com.example.model.IndstocksConnectionStatus
 import com.example.ui.theme.LocalChartPalette
@@ -153,7 +155,7 @@ fun IndstocksBrokerSettingsCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.AccountBalanceWallet,
-                            contentDescription = "INDstocks Broker API",
+                            contentDescription = stringResource(R.string.indstocks_title),
                             tint = if (indstocksState.status == IndstocksConnectionStatus.CONNECTED) palette.bullGreen else palette.goldAccent,
                             modifier = Modifier.size(19.dp)
                         )
@@ -161,17 +163,19 @@ fun IndstocksBrokerSettingsCard(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "INDstocks Broker API",
+                            text = stringResource(R.string.indstocks_title),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary
                         )
                         Text(
-                            text = if (indstocksState.status == IndstocksConnectionStatus.CONNECTED) {
-                                "Primary Live Feed • Yahoo/NSE Fallback"
-                            } else {
-                                "Yahoo/NSE Fallback Active • Optional Broker Primary"
-                            },
+                            text = stringResource(
+                                if (indstocksState.status == IndstocksConnectionStatus.CONNECTED) {
+                                    R.string.indstocks_feed_connected
+                                } else {
+                                    R.string.indstocks_feed_fallback
+                                }
+                            ),
                             fontSize = 10.sp,
                             color = palette.textSecondary,
                             maxLines = 1,
@@ -212,14 +216,20 @@ fun IndstocksBrokerSettingsCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${profile.name} (${profile.ucc.ifBlank { "UCC" }})",
+                            text = stringResource(
+                                R.string.indstocks_profile_ucc_format,
+                                profile.name,
+                                profile.ucc.ifBlank { stringResource(R.string.indstocks_ucc_default) }
+                            ),
                             fontSize = 11.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.bullGreen,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = if (profile.isDdpiActive) "DDPI ON" else "DDPI OFF",
+                            text = stringResource(
+                                if (profile.isDdpiActive) R.string.indstocks_ddpi_on else R.string.indstocks_ddpi_off
+                            ),
                             fontSize = 9.5.sp,
                             color = if (profile.isDdpiActive) palette.bullGreen else palette.goldAccent,
                             fontFamily = FontFamily.Monospace,
@@ -229,16 +239,25 @@ fun IndstocksBrokerSettingsCard(
                     indstocksState.funds?.let { funds ->
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Margin Avail: ₹${String.format(Locale.US, "%,.0f", funds.availableMargin)} • " +
-                                "Holdings: ${indstocksState.holdings.size} • Positions: ${indstocksState.positions.size} • " +
-                                "Orders: ${indstocksState.orderBook.size}",
+                            text = stringResource(
+                                R.string.indstocks_funds_summary_format,
+                                String.format(Locale.US, "%,.0f", funds.availableMargin),
+                                indstocksState.holdings.size,
+                                indstocksState.positions.size,
+                                indstocksState.orderBook.size
+                            ),
                             fontSize = 10.sp,
                             color = palette.textSecondary,
                             fontFamily = FontFamily.Monospace
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Streams: ${indstocksState.wsPriceStatus.label} / ${indstocksState.wsOrderStatus.label} • Lot: ${indstocksState.activeContractLotSize}",
+                            text = stringResource(
+                                R.string.indstocks_streams_summary_format,
+                                indstocksState.wsPriceStatus.label,
+                                indstocksState.wsOrderStatus.label,
+                                indstocksState.activeContractLotSize
+                            ),
                             fontSize = 9.5.sp,
                             color = palette.accentCyan,
                             fontFamily = FontFamily.Monospace
@@ -259,7 +278,10 @@ fun IndstocksBrokerSettingsCard(
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                listOf(0 to "Daily Token", 1 to "TOTP Generator").forEach { (idx, label) ->
+                listOf(
+                    0 to stringResource(R.string.indstocks_tab_daily_token),
+                    1 to stringResource(R.string.indstocks_tab_totp)
+                ).forEach { (idx, label) ->
                     val selected = authTab == idx
                     Box(
                         modifier = Modifier
@@ -294,8 +316,8 @@ fun IndstocksBrokerSettingsCard(
                 OutlinedTextField(
                     value = tokenInput,
                     onValueChange = { tokenInput = it },
-                    label = { Text("INDstocks Access Token") },
-                    placeholder = { Text("Raw token (sent without Bearer prefix)", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.indstocks_token_label)) },
+                    placeholder = { Text(stringResource(R.string.indstocks_token_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     visualTransformation = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -305,7 +327,9 @@ fun IndstocksBrokerSettingsCard(
                         ) {
                             Icon(
                                 imageVector = if (showToken) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showToken) "Hide token" else "Show token",
+                                contentDescription = stringResource(
+                                    if (showToken) R.string.cd_hide_token else R.string.cd_show_token
+                                ),
                                 tint = palette.textSecondary
                             )
                         }
@@ -332,19 +356,19 @@ fun IndstocksBrokerSettingsCard(
                     if (indstocksState.isBusy) {
                         CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Verifying...", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.indstocks_verifying), fontWeight = FontWeight.Bold)
                     } else {
                         Icon(Icons.Default.Key, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Verify & Connect INDstocks", fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
+                        Text(stringResource(R.string.indstocks_verify_connect), fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
                     }
                 }
             } else {
                 OutlinedTextField(
                     value = clientIdInput,
                     onValueChange = { clientIdInput = it },
-                    label = { Text("API Client ID (x-api-key)") },
-                    placeholder = { Text("Enter INDstocks Client ID", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.indstocks_client_id_label)) },
+                    placeholder = { Text(stringResource(R.string.indstocks_client_id_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     colors = fieldColors,
                     modifier = Modifier
@@ -359,7 +383,7 @@ fun IndstocksBrokerSettingsCard(
                     OutlinedTextField(
                         value = mpinInput,
                         onValueChange = { mpinInput = it },
-                        label = { Text("MPIN") },
+                        label = { Text(stringResource(R.string.indstocks_mpin_label)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         visualTransformation = if (showMpin) VisualTransformation.None else PasswordVisualTransformation(),
@@ -370,7 +394,9 @@ fun IndstocksBrokerSettingsCard(
                             ) {
                                 Icon(
                                     imageVector = if (showMpin) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = if (showMpin) "Hide MPIN" else "Show MPIN",
+                                    contentDescription = stringResource(
+                                        if (showMpin) R.string.cd_hide_mpin else R.string.cd_show_mpin
+                                    ),
                                     tint = palette.textSecondary,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -386,7 +412,7 @@ fun IndstocksBrokerSettingsCard(
                         onValueChange = { input ->
                             if (input.length <= 6 && input.all { it.isDigit() }) totpInput = input
                         },
-                        label = { Text("6-Digit TOTP") },
+                        label = { Text(stringResource(R.string.indstocks_totp_label)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = fieldColors,
@@ -411,9 +437,9 @@ fun IndstocksBrokerSettingsCard(
                 ) {
                     Text(
                         text = if (cooldownSec > 0L) {
-                            "TOTP Cooldown (${cooldownSec}s)"
+                            stringResource(R.string.indstocks_totp_cooldown_format, cooldownSec)
                         } else {
-                            "Generate 24h Token (/generate/token)"
+                            stringResource(R.string.indstocks_generate_token)
                         },
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 12.sp
@@ -458,7 +484,7 @@ fun IndstocksBrokerSettingsCard(
                     ) {
                         Icon(Icons.Default.Refresh, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Sync Portfolio", fontSize = 11.sp, color = palette.accentCyan, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.indstocks_sync_portfolio), fontSize = 11.sp, color = palette.accentCyan, fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(
                         onClick = onDisconnect,
@@ -470,7 +496,7 @@ fun IndstocksBrokerSettingsCard(
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = palette.bearRed, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Disconnect", fontSize = 11.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.indstocks_disconnect), fontSize = 11.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
                     }
                 }
             }

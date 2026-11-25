@@ -37,11 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.R
 import com.example.model.OptionStrike
 import com.example.model.OptionsChainSnapshot
 import com.example.ui.theme.LocalChartPalette
@@ -85,7 +87,7 @@ fun OptionsChainScreen(
                         Icon(Icons.Default.Layers, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "NIFTY OPTIONS CHAIN",
+                            text = stringResource(R.string.options_chain_title),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = palette.textPrimary,
@@ -100,7 +102,7 @@ fun OptionsChainScreen(
                                     .padding(horizontal = 5.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "INDSTOCKS",
+                                    text = stringResource(R.string.badge_indstocks),
                                     fontSize = 8.5.sp,
                                     color = palette.bullGreen,
                                     fontWeight = FontWeight.Bold,
@@ -161,10 +163,10 @@ fun OptionsChainScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    MetricMini(label = "PCR (OI)", value = String.format(Locale.US, "%.2f", optionsChain.pcr), color = if (optionsChain.pcr > 1.0) palette.bullGreen else palette.bearRed)
-                    MetricMini(label = "MAX CALL (RES)", value = "${optionsChain.maxCallOiStrike.toInt()}", color = palette.bearRed)
-                    MetricMini(label = "MAX PUT (SUPP)", value = "${optionsChain.maxPutOiStrike.toInt()}", color = palette.bullGreen)
-                    MetricMini(label = "ATM STRADDLE", value = "₹${optionsChain.atmStraddlePremium.toInt()}", color = palette.accentCyan)
+                    MetricMini(label = stringResource(R.string.options_metric_pcr_oi), value = String.format(Locale.US, "%.2f", optionsChain.pcr), color = if (optionsChain.pcr > 1.0) palette.bullGreen else palette.bearRed)
+                    MetricMini(label = stringResource(R.string.options_metric_max_call_res), value = "${optionsChain.maxCallOiStrike.toInt()}", color = palette.bearRed)
+                    MetricMini(label = stringResource(R.string.options_metric_max_put_supp), value = "${optionsChain.maxPutOiStrike.toInt()}", color = palette.bullGreen)
+                    MetricMini(label = stringResource(R.string.options_metric_atm_straddle), value = stringResource(R.string.label_inr_amount_format, optionsChain.atmStraddlePremium.toInt().toString()), color = palette.accentCyan)
                 }
             }
         }
@@ -181,9 +183,9 @@ fun OptionsChainScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = "CALL LTP | CHG OI", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.bearRed, modifier = Modifier.weight(1.3f))
-            Text(text = "STRIKE", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = palette.accentCyan, modifier = Modifier.weight(1f), fontFamily = FontFamily.Monospace)
-            Text(text = "CHG OI | PUT LTP", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen, modifier = Modifier.weight(1.3f))
+            Text(text = stringResource(R.string.options_col_call), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.bearRed, modifier = Modifier.weight(1.3f))
+            Text(text = stringResource(R.string.options_col_strike), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = palette.accentCyan, modifier = Modifier.weight(1f), fontFamily = FontFamily.Monospace)
+            Text(text = stringResource(R.string.options_col_put), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen, modifier = Modifier.weight(1.3f))
         }
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -245,14 +247,18 @@ private fun StrikeRowItem(
         // Call Side: LTP & OI Change
         Column(modifier = Modifier.weight(1.3f)) {
             Text(
-                text = "₹${String.format(Locale.US, "%.1f", strike.callLtp)}",
+                text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%.1f", strike.callLtp)),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textPrimary,
                 fontFamily = FontFamily.Monospace
             )
             Text(
-                text = "${if (strike.callOiChange >= 0) "+" else ""}${String.format(Locale.US, "%,d", strike.callOiChange / 1000)}k",
+                text = stringResource(
+                    R.string.options_oi_change_k_format,
+                    if (strike.callOiChange >= 0) "+" else "",
+                    String.format(Locale.US, "%,d", strike.callOiChange / 1000)
+                ),
                 fontSize = 9.sp,
                 color = if (strike.callOiChange >= 0) palette.bearRed else palette.bullGreen,
                 fontFamily = FontFamily.Monospace
@@ -280,14 +286,18 @@ private fun StrikeRowItem(
         // Put Side: OI Change & LTP
         Column(modifier = Modifier.weight(1.3f), horizontalAlignment = Alignment.End) {
             Text(
-                text = "₹${String.format(Locale.US, "%.1f", strike.putLtp)}",
+                text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%.1f", strike.putLtp)),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textPrimary,
                 fontFamily = FontFamily.Monospace
             )
             Text(
-                text = "${if (strike.putOiChange >= 0) "+" else ""}${String.format(Locale.US, "%,d", strike.putOiChange / 1000)}k",
+                text = stringResource(
+                    R.string.options_oi_change_k_format,
+                    if (strike.putOiChange >= 0) "+" else "",
+                    String.format(Locale.US, "%,d", strike.putOiChange / 1000)
+                ),
                 fontSize = 9.sp,
                 color = if (strike.putOiChange >= 0) palette.bullGreen else palette.bearRed,
                 fontFamily = FontFamily.Monospace
@@ -314,7 +324,7 @@ private fun GreeksDialog(strike: OptionStrike, onDismiss: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "STRIKE ${strike.strikePrice.toInt()} GREEKS",
+                    text = stringResource(R.string.options_strike_greeks_title_format, strike.strikePrice.toInt()),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = palette.accentCyan,
@@ -324,7 +334,7 @@ private fun GreeksDialog(strike: OptionStrike, onDismiss: () -> Unit) {
                     onClick = onDismiss,
                     modifier = Modifier.minimumInteractiveComponentSize()
                 ) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = palette.textSecondary, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_close), tint = palette.textSecondary, modifier = Modifier.size(16.dp))
                 }
             }
 
@@ -332,23 +342,23 @@ private fun GreeksDialog(strike: OptionStrike, onDismiss: () -> Unit) {
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "CALL (CE)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
-                    GreekItem(label = "Delta", value = String.format(Locale.US, "%.2f", strike.callDelta))
-                    GreekItem(label = "Gamma", value = String.format(Locale.US, "%.4f", strike.callGamma))
-                    GreekItem(label = "Theta / Day", value = "-₹${String.format(Locale.US, "%.1f", abs(strike.callTheta))}")
-                    GreekItem(label = "Vega", value = "₹${String.format(Locale.US, "%.2f", strike.callVega)}")
-                    GreekItem(label = "IV", value = "${String.format(Locale.US, "%.1f", strike.callIv)}%")
+                    Text(text = stringResource(R.string.options_call_ce), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
+                    GreekItem(label = stringResource(R.string.options_greek_delta), value = String.format(Locale.US, "%.2f", strike.callDelta))
+                    GreekItem(label = stringResource(R.string.options_greek_gamma), value = String.format(Locale.US, "%.4f", strike.callGamma))
+                    GreekItem(label = stringResource(R.string.options_greek_theta_day), value = stringResource(R.string.options_negative_inr_format, String.format(Locale.US, "%.1f", abs(strike.callTheta))))
+                    GreekItem(label = stringResource(R.string.options_greek_vega), value = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%.2f", strike.callVega)))
+                    GreekItem(label = stringResource(R.string.options_greek_iv), value = stringResource(R.string.options_iv_pct_format, String.format(Locale.US, "%.1f", strike.callIv)))
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                    Text(text = "PUT (PE)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen)
-                    GreekItem(label = "Delta", value = String.format(Locale.US, "%.2f", strike.putDelta), alignEnd = true)
-                    GreekItem(label = "Gamma", value = String.format(Locale.US, "%.4f", strike.putGamma), alignEnd = true)
-                    GreekItem(label = "Theta / Day", value = "-₹${String.format(Locale.US, "%.1f", abs(strike.putTheta))}", alignEnd = true)
-                    GreekItem(label = "Vega", value = "₹${String.format(Locale.US, "%.2f", strike.putVega)}", alignEnd = true)
-                    GreekItem(label = "IV", value = "${String.format(Locale.US, "%.1f", strike.putIv)}%", alignEnd = true)
+                    Text(text = stringResource(R.string.options_put_pe), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen)
+                    GreekItem(label = stringResource(R.string.options_greek_delta), value = String.format(Locale.US, "%.2f", strike.putDelta), alignEnd = true)
+                    GreekItem(label = stringResource(R.string.options_greek_gamma), value = String.format(Locale.US, "%.4f", strike.putGamma), alignEnd = true)
+                    GreekItem(label = stringResource(R.string.options_greek_theta_day), value = stringResource(R.string.options_negative_inr_format, String.format(Locale.US, "%.1f", abs(strike.putTheta))), alignEnd = true)
+                    GreekItem(label = stringResource(R.string.options_greek_vega), value = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%.2f", strike.putVega)), alignEnd = true)
+                    GreekItem(label = stringResource(R.string.options_greek_iv), value = stringResource(R.string.options_iv_pct_format, String.format(Locale.US, "%.1f", strike.putIv)), alignEnd = true)
                 }
             }
         }

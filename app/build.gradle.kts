@@ -63,7 +63,24 @@ android {
     compose = true
     buildConfig = true
   }
-  testOptions { unitTests { isIncludeAndroidResources = true } }
+  testOptions {
+    unitTests {
+      isIncludeAndroidResources = true
+      all { test ->
+        val m2Candidates = listOf(
+          file("${System.getProperty("user.home")}/.m2/repository"),
+          file("/home/appuser/.m2/repository")
+        )
+        val cachedSdkDir = m2Candidates
+          .map { file("$it/org/robolectric/android-all-instrumented/16-robolectric-13921718-i7") }
+          .firstOrNull { file("$it/android-all-instrumented-16-robolectric-13921718-i7.jar").exists() }
+        if (cachedSdkDir != null) {
+          test.systemProperty("robolectric.offline", "true")
+          test.systemProperty("robolectric.dependency.dir", cachedSdkDir.absolutePath)
+        }
+      }
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -143,4 +160,8 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling)
   ksp(libs.androidx.room.compiler)
   // "ksp"(libs.moshi.kotlin.codegen)
+}
+
+ksp {
+  arg("room.schemaLocation", "$projectDir/schemas")
 }

@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Picture
 import androidx.core.content.FileProvider
+import androidx.core.graphics.createBitmap
+import com.example.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -22,7 +24,7 @@ object ChartSnapshotHelper {
     ): Result<String> = runCatching {
         val width = picture.width.coerceAtLeast(1)
         val height = picture.height.coerceAtLeast(1)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         val canvas = Canvas(bitmap)
         canvas.drawPicture(picture)
 
@@ -42,14 +44,14 @@ object ChartSnapshotHelper {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "image/png"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "$symbol ($timeframeLabel) Technical Chart Snapshot")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.snapshot_subject_format, symbol, timeframeLabel))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        val chooser = Intent.createChooser(shareIntent, "Export Chart Snapshot").apply {
+        val chooser = Intent.createChooser(shareIntent, context.getString(R.string.snapshot_chooser_title)).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(chooser)
-        "Snapshot ready (${file.name})"
+        context.getString(R.string.snapshot_ready_format, file.name)
     }
 }

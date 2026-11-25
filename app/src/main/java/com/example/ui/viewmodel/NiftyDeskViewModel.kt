@@ -104,16 +104,16 @@ class NiftyDeskViewModel(
                     dataSourceLabel = ds.dataSourceLabel,
                     isLive = ds.isLiveMarketData
                 )
-                if (ohlcvRepository != null && ds.candles.isNotEmpty() &&
-                    ds.selectedScenarioName == DeskState.SCENARIO_LIVE_FEED
-                ) {
+                ohlcvRepository?.takeIf {
+                    ds.candles.isNotEmpty() && ds.selectedScenarioName == DeskState.SCENARIO_LIVE_FEED
+                }?.let { repo ->
                     val interval = ChartInterval.fromTimeframe(ds.selectedTimeframe)
                     val now = System.currentTimeMillis()
                     val domainBars = ds.candles.map {
                         OHLCV.fromLegacyCandle(it, OHLCV.SYMBOL_NIFTY_50, interval, now)
                     }
                     launch(Dispatchers.IO) {
-                        ohlcvRepository.upsertCandles(domainBars)
+                        repo.upsertCandles(domainBars)
                     }
                 }
             }
@@ -228,17 +228,17 @@ class NiftyDeskViewModel(
     }
 
     fun updateOrderLots(lots: Int) {
-        val clamped = lots.coerceIn(1, 20)
-        _orderLots.value = clamped
-        val rec = _orderToAuthorize.value
-        if (rec != null &&
-            indstocksState.value.accessToken.isNotBlank() &&
-            indstocksState.value.executionMode != ExecutionSafetyMode.PAPER_SIMULATION
-        ) {
-            viewModelScope.launch {
-                repository.previewIndstocksMarginForRecommendation(rec, clamped)
+        val clamped = lots.coerceIn(1, 20).also { _orderLots.value = it }
+        _orderToAuthorize.value
+            ?.takeIf {
+                indstocksState.value.accessToken.isNotBlank() &&
+                    indstocksState.value.executionMode != ExecutionSafetyMode.PAPER_SIMULATION
             }
-        }
+            ?.let { rec ->
+                viewModelScope.launch {
+                    repository.previewIndstocksMarginForRecommendation(rec, clamped)
+                }
+            }
     }
 
     fun confirmOrderExecution(
@@ -400,7 +400,7 @@ class NiftyDeskViewModel(
         connectImmediately: Boolean = true,
         oauthClientId: String = ""
     ) {
-        val updated = repository.updateCustomConnector(
+        repository.updateCustomConnector(
             connectorId = connectorId,
             name = name,
             url = url,
@@ -410,8 +410,7 @@ class NiftyDeskViewModel(
             authSecret = authSecret,
             customHeaders = customHeaders,
             oauthClientId = oauthClientId
-        )
-        if (updated != null && connectImmediately) {
+        )?.takeIf { connectImmediately }?.let { updated ->
             viewModelScope.launch {
                 repository.connectAndDiscoverConnector(updated.id)
             }
@@ -445,66 +444,56 @@ class NiftyDeskViewModel(
         onLaunchBrowser: (String) -> Unit
     ) {
         viewModelScope.launch {
-            activeLoopbackServer?.close()
-            activeLoopbackServer = null
+            closeLoopbackServer()
 
             val redirectUri = if (useCustomSchemeRedirect) {
                 McpOAuthClient.CUSTOM_APP_REDIRECT_URI
             } else {
-                val server = runCatching {
+                runCatching {
                     oauthCallbackHelper.startLoopbackCallbackServer { callbackUri ->
                         handleOAuthCallbackUri(callbackUri)
                     }
                 }.getOrNull()
-                activeLoopbackServer = server
-                server?.redirectUri ?: McpOAuthClient.CUSTOM_APP_REDIRECT_URI
+                    ?.also { activeLoopbackServer = it }
+                    ?.redirectUri
+                    ?: McpOAuthClient.CUSTOM_APP_REDIRECT_URI
             }
 
-            val flow = repository.prepareOAuthAuthorization(
+            repository.prepareOAuthAuthorization(
                 connectorId = connectorId,
                 explicitClientId = explicitClientId,
                 redirectUri = redirectUri
-            )
-            if (flow != null) {
+            )?.let { flow ->
                 onLaunchBrowser(flow.authorizationUrl)
-            } else {
-                activeLoopbackServer?.close()
-                activeLoopbackServer = null
-            }
+            } ?: closeLoopbackServer()
         }
     }
 
     fun handleOAuthCallbackUri(uri: Uri) {
         viewModelScope.launch {
-            val ok = repository.completeOAuthWithCallbackOrCode(uri.toString())
-            if (ok) {
-                activeLoopbackServer?.close()
-                activeLoopbackServer = null
+            if (repository.completeOAuthWithCallbackOrCode(uri.toString())) {
+                closeLoopbackServer()
             }
         }
     }
 
     fun completeOAuthWithManualInput(codeOrCallbackUrl: String) {
         viewModelScope.launch {
-            val ok = repository.completeOAuthWithCallbackOrCode(codeOrCallbackUrl)
-            if (ok) {
-                activeLoopbackServer?.close()
-                activeLoopbackServer = null
+            if (repository.completeOAuthWithCallbackOrCode(codeOrCallbackUrl)) {
+                closeLoopbackServer()
             }
         }
     }
 
     fun applyManualBearerToken(connectorId: String, token: String) {
         viewModelScope.launch {
-            activeLoopbackServer?.close()
-            activeLoopbackServer = null
+            closeLoopbackServer()
             repository.applyManualBearerToken(connectorId, token)
         }
     }
 
     fun dismissOAuthAuthorization() {
-        activeLoopbackServer?.close()
-        activeLoopbackServer = null
+        closeLoopbackServer()
         repository.clearActiveOAuthFlow()
     }
 
@@ -514,11 +503,15 @@ class NiftyDeskViewModel(
         }
     }
 
+    private fun closeLoopbackServer() {
+        activeLoopbackServer?.close()
+        activeLoopbackServer = null
+    }
+
     override fun onCleared() {
         super.onCleared()
         repository.stopIndstocksStreams()
-        activeLoopbackServer?.close()
-        activeLoopbackServer = null
+        closeLoopbackServer()
     }
 }
 
@@ -526,26 +519,20 @@ class NiftyDeskViewModelFactory(
     private val context: Context
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val appCtx = context.applicationContext
-        val store = SharedPreferencesMcpConnectorStore(appCtx)
-        val indstocksStore = SharedPreferencesIndstocksCredentialStore(appCtx)
-        val repository = NiftyMarketRepository(
-            connectorStore = store,
-            indstocksStore = indstocksStore
-        )
-        val chartDb = ChartWorkstationDatabase.getInstance(appCtx)
-        val chartSettingsStore = RoomChartSettingsRepository(chartDb)
-        val ohlcvDao = DatabaseModule.provideNiftyOhlcvDao(appCtx)
-        val ohlcvRepo = RepositoryModule.provideNiftyMarketRepository(
-            context = appCtx,
-            indstocksTokenProvider = { repository.indstocksState.value.accessToken }
-        )
-        return NiftyDeskViewModel(
-            repository = repository,
-            chartSettingsStore = chartSettingsStore,
-            ohlcvRepository = ohlcvRepo,
-            ohlcvDao = ohlcvDao
-        ) as T
-    }
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        context.applicationContext.let { appCtx ->
+            val repository = NiftyMarketRepository(
+                connectorStore = SharedPreferencesMcpConnectorStore(appCtx),
+                indstocksStore = SharedPreferencesIndstocksCredentialStore(appCtx)
+            )
+            NiftyDeskViewModel(
+                repository = repository,
+                chartSettingsStore = RoomChartSettingsRepository(ChartWorkstationDatabase.getInstance(appCtx)),
+                ohlcvRepository = RepositoryModule.provideNiftyMarketRepository(
+                    context = appCtx,
+                    indstocksTokenProvider = { repository.indstocksState.value.accessToken }
+                ),
+                ohlcvDao = DatabaseModule.provideNiftyOhlcvDao(appCtx)
+            ) as T
+        }
 }

@@ -39,11 +39,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.R
 import com.example.model.ExecutionSafetyMode
 import com.example.model.FinalTradeRecommendation
 import com.example.model.IndstocksMarginPreview
@@ -123,7 +125,7 @@ fun OrderAuthorizationDialog(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "ORDER AUTHORIZATION",
+                        text = stringResource(R.string.order_auth_title),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = palette.textPrimary,
@@ -153,7 +155,7 @@ fun OrderAuthorizationDialog(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(R.string.action_close),
                         tint = palette.textSecondary,
                         modifier = Modifier.size(18.dp)
                     )
@@ -161,11 +163,13 @@ fun OrderAuthorizationDialog(
             }
 
             Text(
-                text = when (executionMode) {
-                    ExecutionSafetyMode.PAPER_SIMULATION -> "Paper simulation mode — no real capital at risk."
-                    ExecutionSafetyMode.READ_ONLY_BROKER -> "Broker Read-Only mode — live margin preview active; order submission locked."
-                    ExecutionSafetyMode.LIVE_EXECUTION -> "LIVE REAL-MONEY ORDER via INDstocks API (static IP whitelisting required)."
-                },
+                text = stringResource(
+                    when (executionMode) {
+                        ExecutionSafetyMode.PAPER_SIMULATION -> R.string.order_auth_mode_paper
+                        ExecutionSafetyMode.READ_ONLY_BROKER -> R.string.order_auth_mode_readonly
+                        ExecutionSafetyMode.LIVE_EXECUTION -> R.string.order_auth_mode_live
+                    }
+                ),
                 fontSize = 10.sp,
                 color = if (executionMode == ExecutionSafetyMode.LIVE_EXECUTION) palette.goldAccent else palette.textSecondary
             )
@@ -190,7 +194,11 @@ fun OrderAuthorizationDialog(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Signal: ${recommendation.signal.label} | Est. LTP: ₹${String.format(Locale.US, "%,.2f", estPrice)}",
+                        text = stringResource(
+                            R.string.order_auth_signal_ltp_format,
+                            recommendation.signal.label,
+                            String.format(Locale.US, "%,.2f", estPrice)
+                        ),
                         fontSize = 11.sp,
                         color = palette.textSecondary
                     )
@@ -206,9 +214,14 @@ fun OrderAuthorizationDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "POSITION SIZE", fontSize = 10.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "$orderLots Lots ($totalQty Qty)",
+                        text = stringResource(R.string.order_auth_position_size),
+                        fontSize = 10.sp,
+                        color = palette.textMuted,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.order_auth_lots_qty_format, orderLots, totalQty),
                         fontSize = 14.sp,
                         color = palette.textPrimary,
                         fontWeight = FontWeight.Bold,
@@ -223,7 +236,12 @@ fun OrderAuthorizationDialog(
                             .minimumInteractiveComponentSize()
                             .background(palette.surfaceHighlight, RoundedCornerShape(6.dp))
                     ) {
-                        Icon(Icons.Default.Remove, contentDescription = "Decrease Lots", tint = palette.textPrimary, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Remove,
+                            contentDescription = stringResource(R.string.cd_decrease_lots),
+                            tint = palette.textPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(text = "$orderLots", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
@@ -234,7 +252,12 @@ fun OrderAuthorizationDialog(
                             .minimumInteractiveComponentSize()
                             .background(palette.surfaceHighlight, RoundedCornerShape(6.dp))
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Increase Lots", tint = palette.textPrimary, modifier = Modifier.size(16.dp))
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.cd_increase_lots),
+                            tint = palette.textPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
@@ -282,7 +305,7 @@ fun OrderAuthorizationDialog(
                         colors = CheckboxDefaults.colors(checkedColor = palette.goldAccent, checkmarkColor = Color.Black)
                     )
                     Text(
-                        text = "Arm Smart GTT Bracket (Target + Stop-Loss)",
+                        text = stringResource(R.string.order_auth_arm_smart_gtt),
                         fontSize = 11.sp,
                         color = palette.goldAccent,
                         fontWeight = FontWeight.SemiBold
@@ -302,12 +325,14 @@ fun OrderAuthorizationDialog(
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
-                        text = if (marginPreview != null) "INDstocks Req. Margin:" else "Estimated Capital Req:",
+                        text = stringResource(
+                            if (marginPreview != null) R.string.order_auth_indstocks_req_margin else R.string.order_auth_est_capital_req
+                        ),
                         fontSize = 11.sp,
                         color = palette.textSecondary
                     )
                     Text(
-                        text = "₹${String.format(Locale.US, "%,.0f", totalInvestment)}",
+                        text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", totalInvestment)),
                         fontSize = 11.sp,
                         color = palette.textPrimary,
                         fontWeight = FontWeight.Bold,
@@ -318,7 +343,11 @@ fun OrderAuthorizationDialog(
                     if (mp.spanMargin > 0.0 || mp.exposureMargin > 0.0) {
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "SPAN ₹${String.format(Locale.US, "%,.0f", mp.spanMargin)} • Exposure ₹${String.format(Locale.US, "%,.0f", mp.exposureMargin)}",
+                            text = stringResource(
+                                R.string.order_auth_span_exposure_format,
+                                String.format(Locale.US, "%,.0f", mp.spanMargin),
+                                String.format(Locale.US, "%,.0f", mp.exposureMargin)
+                            ),
                             fontSize = 9.5.sp,
                             color = palette.textMuted,
                             fontFamily = FontFamily.Monospace
@@ -326,9 +355,13 @@ fun OrderAuthorizationDialog(
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(text = "Broker Shortfall:", fontSize = 11.sp, color = palette.textSecondary)
+                        Text(text = stringResource(R.string.order_auth_broker_shortfall), fontSize = 11.sp, color = palette.textSecondary)
                         Text(
-                            text = if (mp.shortfall > 0.0) "₹${String.format(Locale.US, "%,.0f", mp.shortfall)}" else "Covered",
+                            text = if (mp.shortfall > 0.0) {
+                                stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", mp.shortfall))
+                            } else {
+                                stringResource(R.string.order_auth_covered)
+                            },
                             fontSize = 11.sp,
                             color = if (mp.shortfall > 0.0) palette.bearRed else palette.bullGreen,
                             fontWeight = FontWeight.Bold,
@@ -338,7 +371,12 @@ fun OrderAuthorizationDialog(
                     mp.chargesBreakdown?.let { cb ->
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Brokerage ₹${String.format(Locale.US, "%.1f", cb.brokerage)} + GST ₹${String.format(Locale.US, "%.2f", cb.gst)} + Statutory ₹${String.format(Locale.US, "%.2f", cb.stt + cb.exchangeCharges + cb.stampDuty + cb.sebiTurnoverCharges + cb.ipftCharges)}",
+                            text = stringResource(
+                                R.string.order_auth_charges_breakdown_format,
+                                String.format(Locale.US, "%.1f", cb.brokerage),
+                                String.format(Locale.US, "%.2f", cb.gst),
+                                String.format(Locale.US, "%.2f", cb.stt + cb.exchangeCharges + cb.stampDuty + cb.sebiTurnoverCharges + cb.ipftCharges)
+                            ),
                             fontSize = 9.5.sp,
                             color = palette.textMuted,
                             fontFamily = FontFamily.Monospace
@@ -347,9 +385,9 @@ fun OrderAuthorizationDialog(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "Brokerage & Statutory Taxes:", fontSize = 11.sp, color = palette.textSecondary)
+                    Text(text = stringResource(R.string.order_auth_brokerage_taxes), fontSize = 11.sp, color = palette.textSecondary)
                     Text(
-                        text = "₹${String.format(Locale.US, "%.1f", totalCharges)}",
+                        text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%.1f", totalCharges)),
                         fontSize = 11.sp,
                         color = palette.goldAccent,
                         fontFamily = FontFamily.Monospace
@@ -357,9 +395,9 @@ fun OrderAuthorizationDialog(
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(text = "Max Permitted Risk (1.5%):", fontSize = 11.sp, color = palette.textSecondary)
+                    Text(text = stringResource(R.string.order_auth_max_risk), fontSize = 11.sp, color = palette.textSecondary)
                     Text(
-                        text = "₹${String.format(Locale.US, "%,.0f", maxPermittedRisk)}",
+                        text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", maxPermittedRisk)),
                         fontSize = 11.sp,
                         color = palette.bearRed,
                         fontWeight = FontWeight.Bold,
@@ -387,7 +425,7 @@ fun OrderAuthorizationDialog(
                         .minimumInteractiveComponentSize(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(text = "Cancel", color = palette.textSecondary)
+                    Text(text = stringResource(R.string.action_cancel), color = palette.textSecondary)
                 }
 
                 Button(
@@ -406,11 +444,17 @@ fun OrderAuthorizationDialog(
                         CircularProgressIndicator(color = Color.Black, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                     } else {
                         Text(
-                            text = when (executionMode) {
-                                ExecutionSafetyMode.PAPER_SIMULATION -> "TRANSMIT ORDER"
-                                ExecutionSafetyMode.READ_ONLY_BROKER -> "READ-ONLY LOCKED"
-                                ExecutionSafetyMode.LIVE_EXECUTION -> if (useSmartGtt) "SEND LIVE GTT" else "SEND LIVE ORDER"
-                            },
+                            text = stringResource(
+                                when (executionMode) {
+                                    ExecutionSafetyMode.PAPER_SIMULATION -> R.string.order_auth_transmit
+                                    ExecutionSafetyMode.READ_ONLY_BROKER -> R.string.order_auth_readonly_locked
+                                    ExecutionSafetyMode.LIVE_EXECUTION -> if (useSmartGtt) {
+                                        R.string.order_auth_send_live_gtt
+                                    } else {
+                                        R.string.order_auth_send_live_order
+                                    }
+                                }
+                            ),
                             color = Color.Black,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 12.sp

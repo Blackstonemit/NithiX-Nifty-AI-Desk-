@@ -277,66 +277,68 @@ class RoomChartSettingsRepository(
     }
 
     companion object {
-        fun encodeIndicators(list: List<IndicatorConfig>): String {
-            val arr = JSONArray()
-            list.forEach { cfg ->
-                arr.put(JSONObject().apply {
-                    put("id", cfg.id)
-                    put("type", cfg.type.name)
-                    put("enabled", cfg.enabled)
-                    put("period", cfg.period)
-                    put("secondaryPeriod", cfg.secondaryPeriod)
-                    put("tertiaryPeriod", cfg.tertiaryPeriod)
-                    put("multiplier", cfg.multiplier)
-                    put("colorHex", cfg.colorHex)
-                    cfg.anchoredIndex?.let { put("anchoredIndex", it) }
-                })
-            }
-            return arr.toString()
-        }
+        fun encodeIndicators(list: List<IndicatorConfig>): String =
+            JSONArray().apply {
+                list.forEach { cfg ->
+                    put(JSONObject().apply {
+                        put("id", cfg.id)
+                        put("type", cfg.type.name)
+                        put("enabled", cfg.enabled)
+                        put("period", cfg.period)
+                        put("secondaryPeriod", cfg.secondaryPeriod)
+                        put("tertiaryPeriod", cfg.tertiaryPeriod)
+                        put("multiplier", cfg.multiplier)
+                        put("colorHex", cfg.colorHex)
+                        cfg.anchoredIndex?.let { put("anchoredIndex", it) }
+                    })
+                }
+            }.toString()
 
         fun decodeIndicators(raw: String): List<IndicatorConfig> {
             return runCatching {
                 val arr = JSONArray(raw)
-                val out = mutableListOf<IndicatorConfig>()
-                for (i in 0 until arr.length()) {
-                    val o = arr.getJSONObject(i)
-                    val type = runCatching { IndicatorType.valueOf(o.getString("type")) }.getOrNull() ?: continue
-                    out.add(
-                        IndicatorConfig(
-                            id = o.optString("id", type.name.lowercase()),
-                            type = type,
-                            enabled = o.optBoolean("enabled", false),
-                            period = o.optInt("period", type.defaultPeriod),
-                            secondaryPeriod = o.optInt("secondaryPeriod", type.defaultSecondaryPeriod),
-                            tertiaryPeriod = o.optInt("tertiaryPeriod", type.defaultTertiaryPeriod),
-                            multiplier = o.optDouble("multiplier", type.defaultMultiplier),
-                            colorHex = o.optLong("colorHex", type.defaultColorHex),
-                            anchoredIndex = if (o.has("anchoredIndex")) o.optInt("anchoredIndex") else null
+                buildList {
+                    repeat(arr.length()) { i ->
+                        val o = arr.getJSONObject(i)
+                        val type = runCatching { IndicatorType.valueOf(o.getString("type")) }.getOrNull()
+                            ?: return@repeat
+                        add(
+                            IndicatorConfig(
+                                id = o.optString("id", type.name.lowercase()),
+                                type = type,
+                                enabled = o.optBoolean("enabled", false),
+                                period = o.optInt("period", type.defaultPeriod),
+                                secondaryPeriod = o.optInt("secondaryPeriod", type.defaultSecondaryPeriod),
+                                tertiaryPeriod = o.optInt("tertiaryPeriod", type.defaultTertiaryPeriod),
+                                multiplier = o.optDouble("multiplier", type.defaultMultiplier),
+                                colorHex = o.optLong("colorHex", type.defaultColorHex),
+                                anchoredIndex = if (o.has("anchoredIndex")) o.optInt("anchoredIndex") else null
+                            )
                         )
-                    )
-                }
-                if (out.isEmpty()) IndicatorCalculationEngine.defaultConfigs() else out
+                    }
+                }.ifEmpty { IndicatorCalculationEngine.defaultConfigs() }
             }.getOrDefault(IndicatorCalculationEngine.defaultConfigs())
         }
 
-        fun encodePoints(points: List<ChartAnchorPoint>): String {
-            val arr = JSONArray()
-            points.forEach { p ->
-                arr.put(JSONObject().apply {
-                    put("ts", p.timestamp)
-                    put("price", p.price)
-                })
-            }
-            return arr.toString()
-        }
+        fun encodePoints(points: List<ChartAnchorPoint>): String =
+            JSONArray().apply {
+                points.forEach { p ->
+                    put(JSONObject().apply {
+                        put("ts", p.timestamp)
+                        put("price", p.price)
+                    })
+                }
+            }.toString()
 
         fun decodePoints(raw: String): List<ChartAnchorPoint> {
             return runCatching {
                 val arr = JSONArray(raw)
-                (0 until arr.length()).map { i ->
-                    val o = arr.getJSONObject(i)
-                    ChartAnchorPoint(o.getLong("ts"), o.getDouble("price"))
+                buildList(arr.length()) {
+                    repeat(arr.length()) { i ->
+                        arr.getJSONObject(i).let { o ->
+                            add(ChartAnchorPoint(o.getLong("ts"), o.getDouble("price")))
+                        }
+                    }
                 }
             }.getOrDefault(emptyList())
         }

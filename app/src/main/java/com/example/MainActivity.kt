@@ -1,8 +1,9 @@
 package com.example
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
+import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -51,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -210,7 +212,7 @@ class MainActivity : ComponentActivity() {
                                         useCustomSchemeRedirect = customScheme,
                                         onLaunchBrowser = { authUrl ->
                                             runCatching {
-                                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
+                                                val browserIntent = Intent(Intent.ACTION_VIEW, authUrl.toUri())
                                                 startActivity(browserIntent)
                                             }
                                         }
@@ -312,7 +314,7 @@ class MainActivity : ComponentActivity() {
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
-                                                    text = "Options Chain",
+                                                    text = stringResource(R.string.tab_options_chain),
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = if (derivativesSubTab == 0) palette.accentCyan else palette.textSecondary,
@@ -337,7 +339,7 @@ class MainActivity : ComponentActivity() {
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
-                                                    text = "Futures & FII",
+                                                    text = stringResource(R.string.tab_futures_fii),
                                                     fontSize = 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = if (derivativesSubTab == 1) palette.accentCyan else palette.textSecondary,
@@ -479,14 +481,14 @@ fun DashboardHeaderBar(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "NITHIX NIFTY DESK",
+                        text = stringResource(R.string.header_brand_title),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = palette.textPrimary,
                         fontFamily = FontFamily.Monospace
                     )
                     Text(
-                        text = "Market Overview & Price Action",
+                        text = stringResource(R.string.header_brand_subtitle),
                         fontSize = 9.5.sp,
                         color = palette.textSecondary
                     )
@@ -501,7 +503,7 @@ fun DashboardHeaderBar(
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
-                    text = "DASHBOARD",
+                    text = stringResource(R.string.header_badge_dashboard),
                     fontSize = 9.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.accentCyan,
@@ -523,7 +525,7 @@ fun DashboardHeaderBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Settings",
+                contentDescription = stringResource(R.string.cd_settings),
                 tint = palette.accentCyan,
                 modifier = Modifier.size(18.dp)
             )
@@ -538,11 +540,11 @@ private fun DeskBottomNavigationBar(
 ) {
     val palette = LocalChartPalette.current
     val tabs = listOf(
-        NavigationItem("Dashboard", Icons.Default.Assessment),
-        NavigationItem("9 Agents", Icons.Default.Psychology),
-        NavigationItem("Options", Icons.Default.Layers),
-        NavigationItem("Execution", Icons.Default.ElectricBolt),
-        NavigationItem("Report", Icons.Default.Description)
+        NavigationItem(R.string.nav_dashboard, Icons.Default.Assessment),
+        NavigationItem(R.string.nav_agents, Icons.Default.Psychology),
+        NavigationItem(R.string.nav_options, Icons.Default.Layers),
+        NavigationItem(R.string.nav_execution, Icons.Default.ElectricBolt),
+        NavigationItem(R.string.nav_report, Icons.Default.Description)
     )
 
     Column(
@@ -561,6 +563,7 @@ private fun DeskBottomNavigationBar(
         ) {
             tabs.forEachIndexed { index, item ->
                 val isSelected = activeTab == index
+                val labelText = stringResource(item.labelRes)
                 Box(
                     modifier = Modifier
                         .testTag("nav_tab_$index")
@@ -576,13 +579,13 @@ private fun DeskBottomNavigationBar(
                     ) {
                         Icon(
                             imageVector = item.icon,
-                            contentDescription = item.label,
+                            contentDescription = labelText,
                             tint = if (isSelected) palette.accentCyan else palette.textMuted,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = item.label,
+                            text = labelText,
                             fontSize = 10.sp,
                             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
                             color = if (isSelected) palette.accentCyan else palette.textSecondary,
@@ -596,6 +599,6 @@ private fun DeskBottomNavigationBar(
 }
 
 private data class NavigationItem(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector
 )

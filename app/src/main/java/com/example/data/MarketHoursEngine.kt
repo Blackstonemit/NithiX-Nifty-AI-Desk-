@@ -25,9 +25,9 @@ object MarketHoursEngine {
         val minute = calendar.get(Calendar.MINUTE)
         val timeInMinutes = hour * 60 + minute
 
-        val sdf = SimpleDateFormat("hh:mm:ss a 'IST'", Locale.US)
-        sdf.timeZone = TimeZone.getTimeZone("Asia/Kolkata")
-        val istTimeStr = sdf.format(calendar.time)
+        val istTimeStr = SimpleDateFormat("hh:mm:ss a 'IST'", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            .format(calendar.time)
 
         val isWeekend = (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY)
         val isPreOpen = !isWeekend && (timeInMinutes in (9 * 60)..(9 * 60 + 15))

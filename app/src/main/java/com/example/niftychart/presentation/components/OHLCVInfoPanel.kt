@@ -24,9 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.niftychart.domain.model.ChartInterval
 import com.example.niftychart.domain.model.FeedConnectionStatus
 import com.example.niftychart.domain.model.OHLCV
@@ -92,13 +94,15 @@ fun OHLCVInfoPanel(
                         color = palette.textPrimary
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    val badgeLabel = when {
-                        isInspected -> "INSPECT"
-                        connectionStatus == FeedConnectionStatus.LIVE -> "LIVE"
-                        connectionStatus == FeedConnectionStatus.SIMULATED -> "SIM/REF"
-                        connectionStatus == FeedConnectionStatus.RECONNECTING -> "RETRYING"
-                        else -> "OFFLINE"
-                    }
+                    val badgeLabel = stringResource(
+                        when {
+                            isInspected -> R.string.badge_inspect
+                            connectionStatus == FeedConnectionStatus.LIVE -> R.string.badge_live
+                            connectionStatus == FeedConnectionStatus.SIMULATED -> R.string.badge_sim_ref
+                            connectionStatus == FeedConnectionStatus.RECONNECTING -> R.string.badge_retrying
+                            else -> R.string.badge_offline
+                        }
+                    )
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
@@ -115,11 +119,11 @@ fun OHLCVInfoPanel(
                     }
                 }
 
-                if (candle != null) {
-                    val deltaColor = if (candle.isBullish) palette.bullGreen else palette.bearRed
-                    val sign = if (candle.change >= 0.0) "+" else ""
+                candle?.let { activeCandle ->
+                    val deltaColor = if (activeCandle.isBullish) palette.bullGreen else palette.bearRed
+                    val sign = if (activeCandle.change >= 0.0) "+" else ""
                     Text(
-                        text = "₹${String.format(Locale.US, "%,.2f", candle.close)} ($sign${String.format(Locale.US, "%.2f", candle.changePct)}%)",
+                        text = "₹${String.format(Locale.US, "%,.2f", activeCandle.close)} ($sign${String.format(Locale.US, "%.2f", activeCandle.changePct)}%)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = deltaColor,
@@ -149,7 +153,11 @@ fun OHLCVInfoPanel(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${timeFormatter.format(Date(candle.timestamp))} IST (${candle.interval.code})",
+                        text = stringResource(
+                            R.string.ohlcv_timestamp_format,
+                            timeFormatter.format(Date(candle.timestamp)),
+                            candle.interval.code
+                        ),
                         fontSize = 10.sp,
                         color = palette.textSecondary,
                         style = TabularNumericStyle
@@ -165,7 +173,7 @@ fun OHLCVInfoPanel(
                 }
             } else {
                 Text(
-                    text = "Awaiting OHLCV market bars…",
+                    text = stringResource(R.string.ohlcv_awaiting_bars),
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )

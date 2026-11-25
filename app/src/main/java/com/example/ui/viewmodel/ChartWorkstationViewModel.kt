@@ -112,8 +112,9 @@ data class ChartWorkstationUiState(
     val riskPct: Double = 1.5,
     val rewardRiskRatio: Double = 2.0,
     val customStopLoss: Double? = null,
+    val riskLotSize: Int = 75,
     val showRiskOnChart: Boolean = false,
-    val riskPlan: RiskPositionPlan = SignalRiskAndBacktestEngine.calculateRiskPosition(200000.0, 1.5, 25000.0, null, 50.0, true, 2.0),
+    val riskPlan: RiskPositionPlan = SignalRiskAndBacktestEngine.calculateRiskPosition(200000.0, 1.5, 25000.0, null, 50.0, true, 2.0, 75),
     val backtestConfig: BacktestConfig = BacktestConfig(),
     val backtestResult: BacktestResult? = null,
     val savedLayouts: List<SavedChartLayout> = emptyList(),
@@ -160,11 +161,12 @@ class ChartWorkstationCoordinator(
 
     private fun observeDrawingsForActiveKey() {
         drawingsJob?.cancel()
-        val sym = _state.value.activeSymbol.symbol
-        val tf = _state.value.timeframe.label
-        drawingsJob = scope.launch {
-            settingsStore.observeDrawings(sym, tf).collectLatest { list ->
-                _state.update { it.copy(drawings = list) }
+        drawingsJob = _state.value.let { snap ->
+            scope.launch {
+                settingsStore.observeDrawings(snap.activeSymbol.symbol, snap.timeframe.label)
+                    .collectLatest { list ->
+                        _state.update { it.copy(drawings = list) }
+                    }
             }
         }
     }
@@ -237,9 +239,9 @@ class ChartWorkstationCoordinator(
     fun removeWatchlistSymbol(symbol: String) {
         scope.launch {
             settingsStore.removeWatchlistSymbol(symbol)
-            if (_state.value.activeSymbol.symbol == symbol) {
-                selectSymbol(NseWatchlistCatalog.defaultSymbols.first())
-            }
+            _state.value.activeSymbol.symbol
+                .takeIf { it == symbol }
+                ?.let { selectSymbol(NseWatchlistCatalog.defaultSymbols.first()) }
         }
     }
 
@@ -399,41 +401,36 @@ class ChartWorkstationCoordinator(
 
     fun handleChartCanvasTapForDrawing(rawAnchor: ChartAnchorPoint, snappedAnchor: ChartAnchorPoint, noteText: String = "Note") {
         val cur = _state.value
-        val tool = cur.activeDrawingTool
-        if (tool == DrawingToolType.NONE) return
+        val tool = cur.activeDrawingTool.takeIf { it != DrawingToolType.NONE } ?: return
         val effectiveAnchor = if (cur.magnetEnabled) snappedAnchor else rawAnchor
 
-        if (tool.requiredAnchors == 1) {
-            commitNewDrawing(
+        val completedDrawing = when (tool.requiredAnchors) {
+            1 -> ChartDrawing(
+                id = UUID.randomUUID().toString(),
+                symbol = cur.activeSymbol.symbol,
+                timeframe = cur.timeframe.label,
+                toolType = tool,
+                points = listOf(effectiveAnchor),
+                colorHex = cur.activeDrawingColor,
+                text = if (tool == DrawingToolType.TEXT_NOTE) noteText else ""
+            )
+            else -> {
+                val first = cur.pendingAnchor ?: run {
+                    _state.update { it.copy(pendingAnchor = effectiveAnchor) }
+                    return
+                }
                 ChartDrawing(
                     id = UUID.randomUUID().toString(),
                     symbol = cur.activeSymbol.symbol,
                     timeframe = cur.timeframe.label,
                     toolType = tool,
-                    points = listOf(effectiveAnchor),
-                    colorHex = cur.activeDrawingColor,
-                    text = if (tool == DrawingToolType.TEXT_NOTE) noteText else ""
+                    points = listOf(first, effectiveAnchor),
+                    colorHex = cur.activeDrawingColor
                 )
-            )
-            _state.update { it.copy(activeDrawingTool = DrawingToolType.NONE, pendingAnchor = null) }
-        } else {
-            val first = cur.pendingAnchor
-            if (first == null) {
-                _state.update { it.copy(pendingAnchor = effectiveAnchor) }
-            } else {
-                commitNewDrawing(
-                    ChartDrawing(
-                        id = UUID.randomUUID().toString(),
-                        symbol = cur.activeSymbol.symbol,
-                        timeframe = cur.timeframe.label,
-                        toolType = tool,
-                        points = listOf(first, effectiveAnchor),
-                        colorHex = cur.activeDrawingColor
-                    )
-                )
-                _state.update { it.copy(activeDrawingTool = DrawingToolType.NONE, pendingAnchor = null) }
             }
         }
+        commitNewDrawing(completedDrawing)
+        _state.update { it.copy(activeDrawingTool = DrawingToolType.NONE, pendingAnchor = null) }
     }
 
     private fun commitNewDrawing(drawing: ChartDrawing) {
@@ -445,26 +442,19 @@ class ChartWorkstationCoordinator(
     fun undoLastDrawing() {
         val currentDrawings = _state.value.drawings
         val lockedIds = currentDrawings.filter { it.isLocked }.mapTo(HashSet()) { it.id }
-        var target: ChartDrawing? = null
-        while (undoStack.isNotEmpty()) {
-            val candidate = undoStack.removeLast()
-            if (candidate.id !in lockedIds) {
-                target = candidate
-                break
-            }
-        }
-        if (target == null) {
-            target = currentDrawings.lastOrNull { !it.isLocked }
-        }
-        val toDelete = target ?: return
-        redoStack.addLast(toDelete)
-        scope.launch { settingsStore.deleteDrawing(toDelete.id) }
+        val toDelete = generateSequence { undoStack.removeLastOrNull() }
+            .firstOrNull { it.id !in lockedIds }
+            ?: currentDrawings.lastOrNull { !it.isLocked }
+            ?: return
+        toDelete.also { redoStack.addLast(it) }
+            .let { target -> scope.launch { settingsStore.deleteDrawing(target.id) } }
     }
 
     fun redoDrawing() {
-        val item = redoStack.removeLastOrNull() ?: return
-        undoStack.addLast(item)
-        scope.launch { settingsStore.saveDrawing(item) }
+        redoStack.removeLastOrNull()?.also { item ->
+            undoStack.addLast(item)
+            scope.launch { settingsStore.saveDrawing(item) }
+        }
     }
 
     fun toggleLockDrawing(drawing: ChartDrawing) {
@@ -472,27 +462,37 @@ class ChartWorkstationCoordinator(
     }
 
     fun deleteDrawing(id: String) {
-        val target = _state.value.drawings.firstOrNull { it.id == id }
-        if (target?.isLocked == true) return
+        _state.value.drawings.firstOrNull { it.id == id }?.takeIf { it.isLocked }?.let { return }
         scope.launch { settingsStore.deleteDrawing(id) }
     }
 
     fun clearAllDrawings() {
-        val cur = _state.value
-        val lockedIds = cur.drawings.filter { it.isLocked }.mapTo(HashSet()) { it.id }
-        val keptUndo = undoStack.filter { it.id in lockedIds }
-        undoStack.clear()
-        keptUndo.forEach { undoStack.addLast(it) }
-        redoStack.clear()
-        scope.launch { settingsStore.clearDrawings(cur.activeSymbol.symbol, cur.timeframe.label) }
+        _state.value.let { cur ->
+            val lockedIds = cur.drawings.filter { it.isLocked }.mapTo(HashSet()) { it.id }
+            undoStack.filter { it.id in lockedIds }.also { kept ->
+                undoStack.clear()
+                undoStack.addAll(kept)
+            }
+            redoStack.clear()
+            scope.launch { settingsStore.clearDrawings(cur.activeSymbol.symbol, cur.timeframe.label) }
+        }
     }
 
-    fun updateRiskInputs(capital: Double? = null, riskPct: Double? = null, rewardRatio: Double? = null, customSl: Double? = null, clearCustomSl: Boolean = false, showOnChart: Boolean? = null) {
+    fun updateRiskInputs(
+        capital: Double? = null,
+        riskPct: Double? = null,
+        rewardRatio: Double? = null,
+        customSl: Double? = null,
+        clearCustomSl: Boolean = false,
+        showOnChart: Boolean? = null,
+        lotSize: Int? = null
+    ) {
         _state.update { cur ->
             val cap = capital ?: cur.riskCapital
             val rPct = riskPct ?: cur.riskPct
             val rr = rewardRatio ?: cur.rewardRiskRatio
             val sl = if (clearCustomSl) null else (customSl ?: cur.customStopLoss)
+            val lot = (lotSize ?: cur.riskLotSize).coerceIn(1, 10_000)
             val candles = cur.candles
             val lastClose = candles.lastOrNull()?.close ?: 25000.0
             val atr = cur.indicatorSeries.atrSeries.lastOrNull()?.takeIf { it > 0 } ?: (lastClose * 0.005)
@@ -502,8 +502,9 @@ class ChartWorkstationCoordinator(
                 riskPct = rPct,
                 rewardRiskRatio = rr,
                 customStopLoss = sl,
+                riskLotSize = lot,
                 showRiskOnChart = showOnChart ?: cur.showRiskOnChart,
-                riskPlan = SignalRiskAndBacktestEngine.calculateRiskPosition(cap, rPct, lastClose, sl, atr, isLong, rr)
+                riskPlan = SignalRiskAndBacktestEngine.calculateRiskPosition(cap, rPct, lastClose, sl, atr, isLong, rr, lot)
             )
         }
     }
@@ -614,19 +615,19 @@ class ChartWorkstationCoordinator(
     }
 
     fun refreshMtfConfluence() {
-        val cur = _state.value
-        scope.launch {
-            val map = marketDataRepo.fetchMultiTimeframeCandles(
-                symbol = cur.activeSymbol,
-                indstocksToken = indstocksTokenProvider(),
-                currentTf = cur.timeframe,
-                currentCandles = cur.candles
-            )
-            if (map.isNotEmpty()) {
-                val summary = withContext(Dispatchers.Default) {
-                    SignalRiskAndBacktestEngine.evaluateMtfConfluence(map)
+        _state.value.let { cur ->
+            scope.launch {
+                marketDataRepo.fetchMultiTimeframeCandles(
+                    symbol = cur.activeSymbol,
+                    indstocksToken = indstocksTokenProvider(),
+                    currentTf = cur.timeframe,
+                    currentCandles = cur.candles
+                ).takeIf { it.isNotEmpty() }?.let { map ->
+                    val summary = withContext(Dispatchers.Default) {
+                        SignalRiskAndBacktestEngine.evaluateMtfConfluence(map)
+                    }
+                    _state.update { it.copy(mtfConfluence = summary) }
                 }
-                _state.update { it.copy(mtfConfluence = summary) }
             }
         }
     }
@@ -665,7 +666,8 @@ class ChartWorkstationCoordinator(
                     customStopLoss = snap.customStopLoss,
                     atr14 = atr,
                     isLong = signal.score >= 0,
-                    rewardRiskRatio = snap.rewardRiskRatio
+                    rewardRiskRatio = snap.rewardRiskRatio,
+                    lotSize = snap.riskLotSize
                 )
                 Tuple7(series, patterns, structure, sr, vp, signal, risk)
             }

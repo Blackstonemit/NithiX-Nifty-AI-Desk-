@@ -57,11 +57,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.DeskState
 import com.example.model.IndstocksBrokerState
 import com.example.model.McpAuthType
@@ -186,29 +188,33 @@ fun SettingsScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.cd_back),
                     tint = palette.textPrimary
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = when (settingsPage) {
-                        SettingsPage.CONNECTORS -> "Settings → Connectors"
-                        SettingsPage.LLM_AND_THEME -> "Settings → AI LLMs & Theme"
-                        SettingsPage.ROOT -> "Settings"
-                    },
+                    text = stringResource(
+                        when (settingsPage) {
+                            SettingsPage.CONNECTORS -> R.string.settings_title_connectors
+                            SettingsPage.LLM_AND_THEME -> R.string.settings_title_llm_theme
+                            SettingsPage.ROOT -> R.string.settings_title_root
+                        }
+                    ),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = palette.textPrimary,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
-                    text = when (settingsPage) {
-                        SettingsPage.CONNECTORS -> "Model Context Protocol (MCP) plugins & integrations"
-                        SettingsPage.LLM_AND_THEME -> "Multi-LLM AI analyst endpoints & Dark/Light workstation theme"
-                        SettingsPage.ROOT -> "Terminal preferences, broker & MCP connectors"
-                    },
+                    text = stringResource(
+                        when (settingsPage) {
+                            SettingsPage.CONNECTORS -> R.string.settings_subtitle_connectors
+                            SettingsPage.LLM_AND_THEME -> R.string.settings_subtitle_llm_theme
+                            SettingsPage.ROOT -> R.string.settings_subtitle_root
+                        }
+                    ),
                     fontSize = 10.5.sp,
                     color = palette.textSecondary
                 )
@@ -400,7 +406,7 @@ private fun SettingsRootContent(
     val connectedCount = connectors.count { it.status == McpConnectionStatus.CONNECTED }
 
     Text(
-        text = "INTEGRATIONS & PLUGINS",
+        text = stringResource(R.string.settings_section_integrations),
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         color = palette.textSecondary,
@@ -434,7 +440,7 @@ private fun SettingsRootContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Extension,
-                    contentDescription = "Connectors",
+                    contentDescription = stringResource(R.string.settings_connectors_title),
                     tint = palette.accentCyan,
                     modifier = Modifier.size(20.dp)
                 )
@@ -445,7 +451,7 @@ private fun SettingsRootContent(
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Connectors",
+                        text = stringResource(R.string.settings_connectors_title),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.textPrimary
@@ -458,7 +464,7 @@ private fun SettingsRootContent(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "MCP",
+                            text = stringResource(R.string.settings_badge_mcp),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = if (connectedCount > 0) palette.bullGreen else palette.accentCyan,
@@ -468,7 +474,12 @@ private fun SettingsRootContent(
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${connectors.count { it.isBuiltIn }} built-in • $customCount custom connectors • $connectedCount connected",
+                    text = stringResource(
+                        R.string.settings_connectors_summary_format,
+                        connectors.count { it.isBuiltIn },
+                        customCount,
+                        connectedCount
+                    ),
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
@@ -476,7 +487,7 @@ private fun SettingsRootContent(
 
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Open Connectors",
+                contentDescription = stringResource(R.string.cd_open_connectors),
                 tint = palette.accentCyan
             )
         }
@@ -510,7 +521,7 @@ private fun SettingsRootContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Palette,
-                    contentDescription = "Chart Theme & AI LLMs",
+                    contentDescription = stringResource(R.string.settings_llm_theme_title),
                     tint = palette.goldAccent,
                     modifier = Modifier.size(20.dp)
                 )
@@ -518,21 +529,25 @@ private fun SettingsRootContent(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Chart Theme & AI LLMs",
+                    text = stringResource(R.string.settings_llm_theme_title),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${chartState.themeMode.label} • ${chartState.activeLlmConfig.providerType.displayName}",
+                    text = stringResource(
+                        R.string.mode_sync_format,
+                        chartState.themeMode.label,
+                        chartState.activeLlmConfig.providerType.displayName
+                    ),
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Open Chart Theme & AI LLMs",
+                contentDescription = stringResource(R.string.cd_open_llm_theme),
                 tint = palette.goldAccent
             )
         }
@@ -551,7 +566,7 @@ private fun SettingsRootContent(
     Spacer(modifier = Modifier.height(18.dp))
 
     Text(
-        text = "TRADING DESK PREFERENCES",
+        text = stringResource(R.string.settings_section_preferences),
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         color = palette.textSecondary,
@@ -569,8 +584,8 @@ private fun SettingsRootContent(
         Column(modifier = Modifier.padding(14.dp)) {
             SettingsActionHeader(
                 icon = Icons.Default.Tune,
-                title = "Execution Style",
-                subtitle = "Active mode: ${deskState.selectedTradingStyle.title}"
+                title = stringResource(R.string.settings_exec_style_title),
+                subtitle = stringResource(R.string.settings_exec_style_sub_format, deskState.selectedTradingStyle.title)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -625,8 +640,8 @@ private fun SettingsRootContent(
 
             SettingsActionHeader(
                 icon = Icons.Default.Schedule,
-                title = "Analysis Workflow",
-                subtitle = "Current session workflow: ${deskState.selectedWorkflow.title}"
+                title = stringResource(R.string.settings_workflow_title),
+                subtitle = stringResource(R.string.settings_workflow_sub_format, deskState.selectedWorkflow.title)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -685,8 +700,8 @@ private fun SettingsRootContent(
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     SettingsActionHeader(
                         icon = Icons.Default.Settings,
-                        title = "Market Data Feed",
-                        subtitle = "${deskState.dataSourceLabel} • ${deskState.lastSyncLabel}"
+                        title = stringResource(R.string.settings_market_feed_title),
+                        subtitle = stringResource(R.string.mode_sync_format, deskState.dataSourceLabel, deskState.lastSyncLabel)
                     )
                 }
                 OutlinedButton(
@@ -697,12 +712,12 @@ private fun SettingsRootContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "Sync Now",
+                        contentDescription = stringResource(R.string.cd_sync_now),
                         tint = palette.accentCyan,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Sync", color = palette.accentCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_sync), color = palette.accentCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -774,7 +789,7 @@ private fun ConnectorsSettingsContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "MCP Connectors",
+                        text = stringResource(R.string.settings_mcp_connectors_title),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = palette.textPrimary
@@ -782,7 +797,7 @@ private fun ConnectorsSettingsContent(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Allow Nithix NIFTY Desk to connect to external Model Context Protocol (MCP) servers over Streamable HTTP or SSE to discover tools, inspect schemas, and run live RPC calls.",
+                    text = stringResource(R.string.settings_mcp_connectors_desc),
                     fontSize = 11.5.sp,
                     color = palette.textSecondary,
                     lineHeight = 16.sp
@@ -807,7 +822,7 @@ private fun ConnectorsSettingsContent(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Add custom connector",
+                        text = stringResource(R.string.settings_add_custom_connector),
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -819,7 +834,7 @@ private fun ConnectorsSettingsContent(
 
         // Custom Connectors Section
         Text(
-            text = "CUSTOM CONNECTORS (${customConnectors.size})",
+            text = stringResource(R.string.settings_custom_connectors_header_format, customConnectors.size),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -849,14 +864,14 @@ private fun ConnectorsSettingsContent(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "No custom connectors added yet",
+                        text = stringResource(R.string.settings_no_custom_connectors),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.textPrimary
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Tap \"Add custom connector\" above to register a remote MCP server URL.",
+                        text = stringResource(R.string.settings_no_custom_connectors_hint),
                         fontSize = 11.sp,
                         color = palette.textSecondary
                     )
@@ -882,7 +897,7 @@ private fun ConnectorsSettingsContent(
 
         // Built-in NSE Connectors Section
         Text(
-            text = "BUILT-IN NSE CONNECTORS (${builtInConnectors.size})",
+            text = stringResource(R.string.settings_builtin_connectors_header_format, builtInConnectors.size),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -1017,7 +1032,7 @@ private fun ConnectorCard(
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "${connector.tools.size} tools",
+                        text = stringResource(R.string.settings_connector_tools_count_format, connector.tools.size),
                         fontSize = 9.5.sp,
                         color = palette.textPrimary,
                         fontFamily = FontFamily.Monospace
@@ -1038,7 +1053,7 @@ private fun ConnectorCard(
                 }
                 if (connector.lastLatencyMs > 0L) {
                     Text(
-                        text = "${connector.lastLatencyMs}ms",
+                        text = stringResource(R.string.latency_ms_format, connector.lastLatencyMs),
                         fontSize = 9.5.sp,
                         color = palette.bullGreen,
                         fontFamily = FontFamily.Monospace,
@@ -1084,14 +1099,14 @@ private fun ConnectorCard(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Connect",
+                                contentDescription = stringResource(R.string.action_connect),
                                 tint = palette.accentCyan,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (connector.status == McpConnectionStatus.CONNECTED) "Reconnect" else "Connect",
+                            text = stringResource(if (connector.status == McpConnectionStatus.CONNECTED) R.string.action_reconnect else R.string.action_connect),
                             fontSize = 11.sp,
                             color = palette.accentCyan,
                             fontWeight = FontWeight.Bold
@@ -1115,12 +1130,12 @@ private fun ConnectorCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Lock,
-                                contentDescription = "Sign In",
+                                contentDescription = stringResource(R.string.action_sign_in),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Sign In",
+                                text = stringResource(R.string.action_sign_in),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold
                             )
@@ -1136,13 +1151,13 @@ private fun ConnectorCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Build,
-                            contentDescription = "Inspect tools",
+                            contentDescription = stringResource(R.string.cd_inspect_tools),
                             tint = palette.goldAccent,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Tools",
+                            text = stringResource(R.string.action_tools),
                             fontSize = 11.sp,
                             color = palette.goldAccent,
                             fontWeight = FontWeight.Bold
@@ -1160,7 +1175,7 @@ private fun ConnectorCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit custom connector",
+                                contentDescription = stringResource(R.string.cd_edit_custom_connector),
                                 tint = palette.textSecondary,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -1173,7 +1188,7 @@ private fun ConnectorCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.DeleteOutline,
-                                contentDescription = "Delete custom connector",
+                                contentDescription = stringResource(R.string.cd_delete_custom_connector),
                                 tint = palette.bearRed,
                                 modifier = Modifier.size(18.dp)
                             )

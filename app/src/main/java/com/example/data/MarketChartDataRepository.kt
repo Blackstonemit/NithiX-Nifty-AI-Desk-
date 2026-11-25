@@ -53,36 +53,38 @@ class MarketChartDataRepository(
 
         // Priority 1: INDstocks verified historical endpoint when token + scripCode are available
         val cleanToken = IndstocksApiClient.sanitizeToken(indstocksToken)
-        if (cleanToken.isNotBlank() && !symbol.indstocksScripCode.isNullOrBlank()) {
-            val indResult = indstocksClient.fetchHistoricalCandles(
+        val scripCode = symbol.indstocksScripCode?.takeIf { it.isNotBlank() }
+        if (cleanToken.isNotBlank() && scripCode != null) {
+            indstocksClient.fetchHistoricalCandles(
                 accessToken = cleanToken,
-                scripCode = symbol.indstocksScripCode,
+                scripCode = scripCode,
                 timeframe = baseFetchTf
-            )
-            val raw = indResult.getOrNull().orEmpty()
-            if (raw.isNotEmpty()) {
-                val aggregated = TimeframeAggregationEngine.aggregateCandlesForTimeframe(raw, timeframe)
-                val last = aggregated.lastOrNull()
-                if (last != null) {
-                    persistCandlesToRoom(symbol.symbol, timeframe, aggregated)
-                    val hasGaps = TimeframeAggregationEngine.detectHolidayOrSessionGaps(aggregated, timeframe)
-                    return@withContext SymbolChartFetchResult(
-                        symbol = symbol,
-                        timeframe = timeframe,
-                        candles = aggregated,
-                        spotPrice = last.close,
-                        prevClose = aggregated.first().open,
-                        freshness = DataFreshnessInfo(
-                            sourceLabel = "INDstocks Live (${symbol.symbol})",
-                            isRealTime = true,
-                            isAdjusted = isAdjusted,
-                            lastUpdatedEpochMs = last.timestamp,
-                            hasHolidayGaps = hasGaps,
-                            gapNote = if (hasGaps) "NSE session/holiday gaps preserved" else null
-                        )
-                    )
+            ).getOrNull()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { raw ->
+                    TimeframeAggregationEngine.aggregateCandlesForTimeframe(raw, timeframe)
+                        .takeIf { it.isNotEmpty() }
+                        ?.also { persistCandlesToRoom(symbol.symbol, timeframe, it) }
+                        ?.let { aggregated ->
+                            val last = aggregated.last()
+                            val hasGaps = TimeframeAggregationEngine.detectHolidayOrSessionGaps(aggregated, timeframe)
+                            return@withContext SymbolChartFetchResult(
+                                symbol = symbol,
+                                timeframe = timeframe,
+                                candles = aggregated,
+                                spotPrice = last.close,
+                                prevClose = aggregated.first().open,
+                                freshness = DataFreshnessInfo(
+                                    sourceLabel = "INDstocks Live (${symbol.symbol})",
+                                    isRealTime = true,
+                                    isAdjusted = isAdjusted,
+                                    lastUpdatedEpochMs = last.timestamp,
+                                    hasHolidayGaps = hasGaps,
+                                    gapNote = if (hasGaps) "NSE session/holiday gaps preserved" else null
+                                )
+                            )
+                        }
                 }
-            }
         }
 
         // Priority 2: Yahoo Finance Chart v8 (supports both NIFTY indices & NSE stocks)
@@ -94,52 +96,54 @@ class MarketChartDataRepository(
             maxCandles = 320
         )
 
-        val quote = yahooRes.getOrNull()
-        if (quote != null && quote.candles.isNotEmpty()) {
-            val aggregated = TimeframeAggregationEngine.aggregateCandlesForTimeframe(quote.candles, timeframe)
-            persistCandlesToRoom(symbol.symbol, timeframe, aggregated)
-            val hasGaps = TimeframeAggregationEngine.detectHolidayOrSessionGaps(aggregated, timeframe)
-            return@withContext SymbolChartFetchResult(
-                symbol = symbol,
-                timeframe = timeframe,
-                candles = aggregated,
-                spotPrice = quote.spotPrice,
-                prevClose = quote.prevClose,
-                freshness = DataFreshnessInfo(
-                    sourceLabel = "Yahoo Finance (${symbol.symbol})",
-                    isRealTime = MarketHoursEngine.getMarketSessionStatus(false).isExchangeOpen,
-                    isAdjusted = isAdjusted,
-                    lastUpdatedEpochMs = quote.marketTimestampSec * 1000L,
-                    hasHolidayGaps = hasGaps,
-                    gapNote = if (hasGaps) "Exchange holidays/gaps preserved (no fabricated bars)" else null
+        yahooRes.getOrNull()
+            ?.takeIf { it.candles.isNotEmpty() }
+            ?.let { quote ->
+                val aggregated = TimeframeAggregationEngine.aggregateCandlesForTimeframe(quote.candles, timeframe)
+                    .also { persistCandlesToRoom(symbol.symbol, timeframe, it) }
+                val hasGaps = TimeframeAggregationEngine.detectHolidayOrSessionGaps(aggregated, timeframe)
+                return@withContext SymbolChartFetchResult(
+                    symbol = symbol,
+                    timeframe = timeframe,
+                    candles = aggregated,
+                    spotPrice = quote.spotPrice,
+                    prevClose = quote.prevClose,
+                    freshness = DataFreshnessInfo(
+                        sourceLabel = "Yahoo Finance (${symbol.symbol})",
+                        isRealTime = MarketHoursEngine.getMarketSessionStatus(false).isExchangeOpen,
+                        isAdjusted = isAdjusted,
+                        lastUpdatedEpochMs = quote.marketTimestampSec * 1000L,
+                        hasHolidayGaps = hasGaps,
+                        gapNote = if (hasGaps) "Exchange holidays/gaps preserved (no fabricated bars)" else null
+                    )
                 )
-            )
-        }
+            }
 
         // Priority 3: Offline-first Room SQLite OHLCV cache fallback
         val roomInterval = ChartInterval.fromTimeframe(timeframe)
-        val cachedEntities = runCatching {
+        runCatching {
             ohlcvDao?.getLatestNCandles(symbol.symbol, roomInterval.code, 300).orEmpty()
         }.getOrDefault(emptyList())
-        if (cachedEntities.isNotEmpty()) {
-            val cachedCandles = cachedEntities.map { it.toDomain().toLegacyCandle() }
-            val last = cachedCandles.last()
-            return@withContext SymbolChartFetchResult(
-                symbol = symbol,
-                timeframe = timeframe,
-                candles = cachedCandles,
-                spotPrice = last.close,
-                prevClose = cachedCandles.first().open,
-                freshness = DataFreshnessInfo(
-                    sourceLabel = "Room Offline Cache (${symbol.symbol})",
-                    isRealTime = false,
-                    isAdjusted = isAdjusted,
-                    lastUpdatedEpochMs = last.timestamp,
-                    hasHolidayGaps = false,
-                    gapNote = "Showing persisted offline Room history"
+            .takeIf { it.isNotEmpty() }
+            ?.let { cachedEntities ->
+                val cachedCandles = cachedEntities.map { it.toDomain().toLegacyCandle() }
+                val last = cachedCandles.last()
+                return@withContext SymbolChartFetchResult(
+                    symbol = symbol,
+                    timeframe = timeframe,
+                    candles = cachedCandles,
+                    spotPrice = last.close,
+                    prevClose = cachedCandles.first().open,
+                    freshness = DataFreshnessInfo(
+                        sourceLabel = "Room Offline Cache (${symbol.symbol})",
+                        isRealTime = false,
+                        isAdjusted = isAdjusted,
+                        lastUpdatedEpochMs = last.timestamp,
+                        hasHolidayGaps = false,
+                        gapNote = "Showing persisted offline Room history"
+                    )
                 )
-            )
-        }
+            }
 
         val err = yahooRes.exceptionOrNull()?.message ?: "Market feed unreachable for ${symbol.symbol}"
         SymbolChartFetchResult(
@@ -168,11 +172,11 @@ class MarketChartDataRepository(
         val dao = ohlcvDao ?: return
         val interval = ChartInterval.fromTimeframe(timeframe)
         val now = System.currentTimeMillis()
-        val entities = candles.mapNotNull { candle ->
-            val domain = OHLCV.fromLegacyCandle(candle, symbol, interval, now)
-            if (domain.isValid()) NiftyOHLCVEntity.fromDomain(domain) else null
-        }
-        if (entities.isNotEmpty()) {
+        candles.mapNotNull { candle ->
+            OHLCV.fromLegacyCandle(candle, symbol, interval, now)
+                .takeIf { it.isValid() }
+                ?.let(NiftyOHLCVEntity::fromDomain)
+        }.takeIf { it.isNotEmpty() }?.let { entities ->
             runCatching { dao.upsertCandlesDeduplicated(entities) }
         }
     }
@@ -184,8 +188,8 @@ class MarketChartDataRepository(
         currentCandles: List<Candle>
     ): Map<Timeframe, List<Candle>> = coroutineScope {
         val mtfTargets = listOf(Timeframe.DAILY, Timeframe.H1, Timeframe.M15)
-        val results = mtfTargets.map { tf ->
-            tf to async {
+        val results = mtfTargets.associateWith { tf ->
+            async {
                 if (tf == currentTf && currentCandles.isNotEmpty()) {
                     currentCandles
                 } else {
@@ -197,18 +201,18 @@ class MarketChartDataRepository(
                     ).candles
                 }
             }
-        }.toMap()
+        }
 
-        val out = LinkedHashMap<Timeframe, List<Candle>>()
-        for ((tf, def) in results) {
-            val list = def.await()
-            if (list.isNotEmpty()) out[tf] = list
+        LinkedHashMap<Timeframe, List<Candle>>().apply {
+            results.forEach { (tf, def) ->
+                def.await().takeIf { it.isNotEmpty() }?.let { put(tf, it) }
+            }
+            this[Timeframe.H1]?.let { h1List ->
+                TimeframeAggregationEngine.aggregateCandlesForTimeframe(h1List, Timeframe.H4)
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { put(Timeframe.H4, it) }
+            }
         }
-        out[Timeframe.H1]?.let { h1List ->
-            val h4 = TimeframeAggregationEngine.aggregateCandlesForTimeframe(h1List, Timeframe.H4)
-            if (h4.isNotEmpty()) out[Timeframe.H4] = h4
-        }
-        out
     }
 
     private fun effectiveYahooRange(timeframe: Timeframe, preset: DateRangePreset): String {

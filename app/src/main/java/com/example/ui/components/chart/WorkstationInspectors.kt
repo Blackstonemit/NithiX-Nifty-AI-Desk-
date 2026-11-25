@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.engine.chart.IndicatorCalculationEngine
 import com.example.model.IndicatorCategory
 import com.example.model.IndicatorConfig
@@ -66,7 +68,7 @@ fun IndicatorsInspectorPanel(
         modifier = Modifier.fillMaxWidth().testTag("inspector_indicators_panel"),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text("QUICK STRATEGY PRESETS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
+        Text(stringResource(R.string.inspector_quick_presets), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -91,7 +93,7 @@ fun IndicatorsInspectorPanel(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Search 25+ indicators (EMA, RSI, Ichimoku...)", fontSize = 11.sp) },
+            label = { Text(stringResource(R.string.inspector_search_indicators), fontSize = 11.sp) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -100,7 +102,7 @@ fun IndicatorsInspectorPanel(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CategoryChip("All", selectedCategory == null) { selectedCategory = null }
+            CategoryChip(stringResource(R.string.label_all), selectedCategory == null) { selectedCategory = null }
             IndicatorCategory.entries.forEach { cat ->
                 CategoryChip(cat.label, selectedCategory == cat) { selectedCategory = cat }
             }
@@ -129,8 +131,9 @@ fun IndicatorsInspectorPanel(
                     Spacer(Modifier.width(8.dp))
                     Column {
                         Text(cfg.type.displayName, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = palette.textPrimary)
+                        val paneLabel = if (cfg.type.isOverlay) stringResource(R.string.inspector_price_overlay) else stringResource(R.string.inspector_lower_pane)
                         Text(
-                            "${cfg.displayTag()} · ${if (cfg.type.isOverlay) "Price Overlay" else "Lower Pane"}",
+                            stringResource(R.string.inspector_tag_pane_format, cfg.displayTag(), paneLabel),
                             fontSize = 10.sp,
                             color = palette.textSecondary,
                             style = TabularNumericStyle
@@ -142,7 +145,7 @@ fun IndicatorsInspectorPanel(
                         onClick = { editingConfig = cfg },
                         modifier = Modifier.minimumInteractiveComponentSize().size(34.dp)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = "Configure ${cfg.type.shortName}", tint = palette.textSecondary, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.cd_configure_indicator_format, cfg.type.shortName), tint = palette.textSecondary, modifier = Modifier.size(16.dp))
                     }
                     Switch(
                         checked = cfg.enabled,
@@ -161,17 +164,17 @@ fun IndicatorsInspectorPanel(
         var mult by remember(cfg.id) { mutableStateOf(cfg.multiplier.toString()) }
         AlertDialog(
             onDismissRequest = { editingConfig = null },
-            title = { Text("Tune ${cfg.type.displayName}") },
+            title = { Text(stringResource(R.string.inspector_tune_title_format, cfg.type.displayName)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = p1, onValueChange = { p1 = it }, label = { Text("Primary Period") }, singleLine = true)
+                    OutlinedTextField(value = p1, onValueChange = { p1 = it }, label = { Text(stringResource(R.string.inspector_primary_period)) }, singleLine = true)
                     if (cfg.type.defaultSecondaryPeriod > 0) {
-                        OutlinedTextField(value = p2, onValueChange = { p2 = it }, label = { Text("Secondary Period") }, singleLine = true)
+                        OutlinedTextField(value = p2, onValueChange = { p2 = it }, label = { Text(stringResource(R.string.inspector_secondary_period)) }, singleLine = true)
                     }
                     if (cfg.type.defaultTertiaryPeriod > 0) {
-                        OutlinedTextField(value = p3, onValueChange = { p3 = it }, label = { Text("Signal / Cloud Period") }, singleLine = true)
+                        OutlinedTextField(value = p3, onValueChange = { p3 = it }, label = { Text(stringResource(R.string.inspector_signal_period)) }, singleLine = true)
                     }
-                    OutlinedTextField(value = mult, onValueChange = { mult = it }, label = { Text("Multiplier / Step") }, singleLine = true)
+                    OutlinedTextField(value = mult, onValueChange = { mult = it }, label = { Text(stringResource(R.string.inspector_multiplier_step)) }, singleLine = true)
                 }
             },
             confirmButton = {
@@ -185,9 +188,9 @@ fun IndicatorsInspectorPanel(
                         cfg.colorHex
                     )
                     editingConfig = null
-                }) { Text("Apply") }
+                }) { Text(stringResource(R.string.action_apply)) }
             },
-            dismissButton = { TextButton(onClick = { editingConfig = null }) { Text("Cancel") } }
+            dismissButton = { TextButton(onClick = { editingConfig = null }) { Text(stringResource(R.string.action_cancel)) } }
         )
     }
 }
@@ -216,8 +219,8 @@ fun StructureAndPatternsPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Render Smart Money Overlays", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
-                Text("Order Blocks, FVG, BOS/CHoCH on chart", fontSize = 10.sp, color = palette.textSecondary)
+                Text(stringResource(R.string.inspector_render_smc), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
+                Text(stringResource(R.string.inspector_render_smc_sub), fontSize = 10.sp, color = palette.textSecondary)
             }
             Switch(checked = state.showSmcOverlays, onCheckedChange = onToggleSmcOverlay)
         }
@@ -233,8 +236,8 @@ fun StructureAndPatternsPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Candlestick Pattern Markers", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
-                Text("${state.detectedPatterns.size} patterns detected in window", fontSize = 10.sp, color = palette.textSecondary)
+                Text(stringResource(R.string.inspector_pattern_markers), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
+                Text(stringResource(R.string.inspector_patterns_count_format, state.detectedPatterns.size), fontSize = 10.sp, color = palette.textSecondary)
             }
             Switch(checked = state.showPatternBadges, onCheckedChange = onTogglePatternBadges)
         }
@@ -249,20 +252,55 @@ fun StructureAndPatternsPanel(
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text("DEALING RANGE & ORB", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
-            Text("Zone: ${smc.currentZoneLabel} (Eq: ${String.format(Locale.US, "%,.2f", smc.equilibriumPrice)})", fontSize = 11.sp, color = palette.textPrimary, style = TabularNumericStyle)
-            Text("Active OB: ${smc.orderBlocks.count { !it.isMitigated }} unmitigated | Open FVG: ${smc.fvgZones.count { !it.isMitigated }} | Sweeps: ${smc.liquiditySweeps.size}", fontSize = 10.5.sp, color = palette.textSecondary, style = TabularNumericStyle)
+            Text(stringResource(R.string.inspector_dealing_orb_header), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
+            Text(
+                stringResource(R.string.inspector_zone_eq_format, smc.currentZoneLabel, String.format(Locale.US, "%,.2f", smc.equilibriumPrice)),
+                fontSize = 11.sp,
+                color = palette.textPrimary,
+                style = TabularNumericStyle
+            )
+            Text(
+                stringResource(
+                    R.string.inspector_ob_fvg_sweeps_format,
+                    smc.orderBlocks.count { !it.isMitigated },
+                    smc.fvgZones.count { !it.isMitigated },
+                    smc.liquiditySweeps.size
+                ),
+                fontSize = 10.5.sp,
+                color = palette.textSecondary,
+                style = TabularNumericStyle
+            )
             smc.orb15m?.let {
-                Text("15m ORB: ${String.format(Locale.US, "%.1f", it.low)} – ${String.format(Locale.US, "%.1f", it.high)} (${it.status})", fontSize = 10.5.sp, color = palette.accentCyan, style = TabularNumericStyle)
+                Text(
+                    stringResource(
+                        R.string.inspector_orb_15m_format,
+                        String.format(Locale.US, "%.1f", it.low),
+                        String.format(Locale.US, "%.1f", it.high),
+                        it.status
+                    ),
+                    fontSize = 10.5.sp,
+                    color = palette.accentCyan,
+                    style = TabularNumericStyle
+                )
             }
             smc.orb30m?.let {
-                Text("30m ORB: ${String.format(Locale.US, "%.1f", it.low)} – ${String.format(Locale.US, "%.1f", it.high)} (${it.status})", fontSize = 10.5.sp, color = palette.textSecondary, style = TabularNumericStyle)
+                Text(
+                    stringResource(
+                        R.string.inspector_orb_30m_format,
+                        String.format(Locale.US, "%.1f", it.low),
+                        String.format(Locale.US, "%.1f", it.high),
+                        it.status
+                    ),
+                    fontSize = 10.5.sp,
+                    color = palette.textSecondary,
+                    style = TabularNumericStyle
+                )
             }
         }
 
-        Text("DETECTED CANDLESTICK PATTERNS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, style = TabularNumericStyle)
+        Text(stringResource(R.string.inspector_detected_patterns_header), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, style = TabularNumericStyle)
         if (state.detectedPatterns.isEmpty()) {
-            Text("No high-confidence reversal or continuation patterns detected in the current bars.", fontSize = 11.sp, color = palette.textMuted)
+            Text(stringResource(R.string.inspector_no_patterns), fontSize = 11.sp, color = palette.textMuted)
         } else {
             state.detectedPatterns.reversed().take(8).forEach { pat ->
                 val accent = when (pat.sentiment) {
@@ -280,7 +318,7 @@ fun StructureAndPatternsPanel(
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(pat.title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accent)
-                        Text("${pat.sentiment} · ${pat.confidencePct}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accent, style = TabularNumericStyle)
+                        Text(stringResource(R.string.inspector_pattern_badge_format, pat.sentiment, pat.confidencePct), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accent, style = TabularNumericStyle)
                     }
                     Spacer(Modifier.height(2.dp))
                     Text(pat.explanation, fontSize = 10.5.sp, color = palette.textSecondary)
@@ -304,8 +342,8 @@ fun SrAndVolumeProfilePanel(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ToggleCard("Show S/R Lines", state.showSrLevels, onToggleSrOverlay, Modifier.weight(1f))
-            ToggleCard("Show Volume Profile", state.showVolumeProfile, onToggleVpvrOverlay, Modifier.weight(1f))
+            ToggleCard(stringResource(R.string.inspector_show_sr), state.showSrLevels, onToggleSrOverlay, Modifier.weight(1f))
+            ToggleCard(stringResource(R.string.inspector_show_vpvr), state.showVolumeProfile, onToggleVpvrOverlay, Modifier.weight(1f))
         }
 
         Column(
@@ -317,23 +355,38 @@ fun SrAndVolumeProfilePanel(
                 .padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text("VOLUME PROFILE & LIQUIDITY (VPVR)", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
+            Text(stringResource(R.string.inspector_vpvr_header), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, style = TabularNumericStyle)
             Text(
-                "POC: ₹${String.format(Locale.US, "%,.2f", vp.pocPrice)} | VAH: ₹${String.format(Locale.US, "%,.2f", vp.vahPrice)} | VAL: ₹${String.format(Locale.US, "%,.2f", vp.valPrice)}",
+                stringResource(
+                    R.string.inspector_vpvr_levels_format,
+                    String.format(Locale.US, "%,.2f", vp.pocPrice),
+                    String.format(Locale.US, "%,.2f", vp.vahPrice),
+                    String.format(Locale.US, "%,.2f", vp.valPrice)
+                ),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textPrimary,
                 style = TabularNumericStyle
             )
+            val volSourceLabel = if (vp.hasVolumeData) {
+                stringResource(R.string.inspector_ohlc_vol_approx)
+            } else {
+                stringResource(R.string.inspector_index_pa_activity)
+            }
             Text(
-                "RVOL: ${String.format(Locale.US, "%.2f", vp.rvolRatio)}x | Est. Up-Vol Delta: ${String.format(Locale.US, "%.0f", vp.upVolumePct)}% (${if (vp.hasVolumeData) "OHLC Volume Approx" else "Index Price-Action Activity"})",
+                stringResource(
+                    R.string.inspector_vpvr_rvol_format,
+                    String.format(Locale.US, "%.2f", vp.rvolRatio),
+                    String.format(Locale.US, "%.0f", vp.upVolumePct),
+                    volSourceLabel
+                ),
                 fontSize = 10.sp,
                 color = palette.textSecondary,
                 style = TabularNumericStyle
             )
         }
 
-        Text("KEY SUPPORT & RESISTANCE CLUSTERS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, style = TabularNumericStyle)
+        Text(stringResource(R.string.inspector_key_sr_header), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, style = TabularNumericStyle)
         state.srLevels.forEach { lvl ->
             val col = if (lvl.isSupport) palette.bullGreen else palette.bearRed
             Row(
@@ -347,10 +400,10 @@ fun SrAndVolumeProfilePanel(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("${lvl.label} (${lvl.source.label})", fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = palette.textPrimary)
-                    Text("${lvl.touchCount} touches · Strength ${lvl.strengthScore}/100", fontSize = 10.sp, color = palette.textSecondary, style = TabularNumericStyle)
+                    Text(stringResource(R.string.inspector_sr_label_format, lvl.label, lvl.source.label), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = palette.textPrimary)
+                    Text(stringResource(R.string.inspector_sr_touches_format, lvl.touchCount, lvl.strengthScore), fontSize = 10.sp, color = palette.textSecondary, style = TabularNumericStyle)
                 }
-                Text("₹${String.format(Locale.US, "%,.2f", lvl.price)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = col, style = TabularNumericStyle)
+                Text(stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", lvl.price)), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = col, style = TabularNumericStyle)
             }
         }
     }

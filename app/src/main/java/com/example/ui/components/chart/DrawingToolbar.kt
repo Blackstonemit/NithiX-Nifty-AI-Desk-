@@ -33,9 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.DrawingToolType
 import com.example.ui.theme.LocalChartPalette
 import com.example.ui.theme.TabularNumericStyle
@@ -129,9 +131,9 @@ fun DrawingToolbar(
                 Spacer(Modifier.width(4.dp))
                 Text(
                     text = when {
-                        activeTool == DrawingToolType.NONE -> "$drawingsCount saved"
-                        hasPendingAnchor -> "Tap 2nd anchor"
-                        else -> "Tap chart (${activeTool.requiredAnchors}pt)"
+                        activeTool == DrawingToolType.NONE -> stringResource(R.string.draw_saved_count_format, drawingsCount)
+                        hasPendingAnchor -> stringResource(R.string.draw_tap_second_anchor)
+                        else -> stringResource(R.string.draw_tap_chart_format, activeTool.requiredAnchors)
                     },
                     fontSize = 10.sp,
                     color = if (activeTool != DrawingToolType.NONE) palette.goldAccent else palette.textSecondary,
@@ -146,7 +148,7 @@ fun DrawingToolbar(
                 ) {
                     Icon(
                         Icons.Default.MyLocation,
-                        contentDescription = "Toggle Magnet Snap",
+                        contentDescription = stringResource(R.string.cd_toggle_magnet),
                         tint = if (magnetEnabled) palette.accentCyan else palette.textMuted,
                         modifier = Modifier.size(16.dp)
                     )
@@ -155,13 +157,13 @@ fun DrawingToolbar(
                     onClick = onUndo,
                     modifier = Modifier.minimumInteractiveComponentSize().size(36.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo drawing", tint = palette.textSecondary, modifier = Modifier.size(16.dp))
+                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.cd_undo_drawing), tint = palette.textSecondary, modifier = Modifier.size(16.dp))
                 }
                 IconButton(
                     onClick = onRedo,
                     modifier = Modifier.minimumInteractiveComponentSize().size(36.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo drawing", tint = palette.textSecondary, modifier = Modifier.size(16.dp))
+                    Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = stringResource(R.string.cd_redo_drawing), tint = palette.textSecondary, modifier = Modifier.size(16.dp))
                 }
                 IconButton(
                     onClick = onToggleHideAll,
@@ -169,7 +171,7 @@ fun DrawingToolbar(
                 ) {
                     Icon(
                         if (hideAllDrawings) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = "Hide or show drawings",
+                        contentDescription = stringResource(R.string.cd_toggle_hide_drawings),
                         tint = if (hideAllDrawings) palette.bearRed else palette.textSecondary,
                         modifier = Modifier.size(16.dp)
                     )
@@ -178,7 +180,7 @@ fun DrawingToolbar(
                     onClick = onClearAll,
                     modifier = Modifier.minimumInteractiveComponentSize().size(36.dp)
                 ) {
-                    Icon(Icons.Default.DeleteSweep, contentDescription = "Clear all drawings", tint = palette.bearRed, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.DeleteSweep, contentDescription = stringResource(R.string.cd_clear_all_drawings), tint = palette.bearRed, modifier = Modifier.size(16.dp))
                 }
             }
         }

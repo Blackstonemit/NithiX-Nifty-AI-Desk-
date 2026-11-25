@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.AiChartAnalysisUiState
 import com.example.ui.theme.LocalChartPalette
 import com.example.ui.theme.TabularNumericStyle
@@ -70,7 +72,7 @@ fun AiChartAnalystSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "ACTIVE LLM PROVIDER",
+                stringResource(R.string.ai_active_llm_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.accentCyan,
@@ -79,7 +81,7 @@ fun AiChartAnalystSheet(
             OutlinedButton(onClick = onOpenLlmSettings) {
                 Icon(Icons.Default.Settings, contentDescription = null, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(4.dp))
-                Text("Configure Providers", fontSize = 10.sp)
+                Text(stringResource(R.string.ai_configure_providers), fontSize = 10.sp)
             }
         }
 
@@ -111,7 +113,7 @@ fun AiChartAnalystSheet(
         OutlinedTextField(
             value = customPrompt,
             onValueChange = { customPrompt = it },
-            label = { Text("Optional focus question (e.g. breakout targets or SL placement)", fontSize = 11.sp) },
+            label = { Text(stringResource(R.string.ai_focus_question_label), fontSize = 11.sp) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -123,13 +125,22 @@ fun AiChartAnalystSheet(
         ) {
             Icon(Icons.Default.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Analyze ${state.activeSymbol.symbol} (${state.timeframe.label}) via ${state.activeLlmConfig.providerType.displayName}", fontSize = 11.5.sp, fontWeight = FontWeight.Bold)
+            Text(
+                stringResource(
+                    R.string.ai_analyze_cta_format,
+                    state.activeSymbol.symbol,
+                    state.timeframe.label,
+                    state.activeLlmConfig.providerType.displayName
+                ),
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         when (val ai = state.aiAnalysisState) {
             is AiChartAnalysisUiState.Idle -> {
                 Text(
-                    "Sends compact pre-computed indicators, S&R clusters, VPVR POC/VAH/VAL, SMC structure, and MTF alignment to ${state.activeLlmConfig.modelName}.",
+                    stringResource(R.string.ai_idle_description_format, state.activeLlmConfig.modelName),
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
@@ -142,7 +153,7 @@ fun AiChartAnalystSheet(
                 ) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = palette.accentCyan, strokeWidth = 2.dp)
                     Spacer(Modifier.width(10.dp))
-                    Text("Connecting to ${ai.providerLabel}...", fontSize = 12.sp, color = palette.textPrimary)
+                    Text(stringResource(R.string.ai_connecting_format, ai.providerLabel), fontSize = 12.sp, color = palette.textPrimary)
                 }
             }
             is AiChartAnalysisUiState.Streaming -> {
@@ -154,24 +165,30 @@ fun AiChartAnalystSheet(
                         .border(1.dp, palette.accentCyan.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
                         .padding(10.dp)
                 ) {
-                    Text("STREAMING FROM ${ai.providerLabel.uppercase()}", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan, style = TabularNumericStyle)
+                    Text(
+                        stringResource(R.string.ai_streaming_from_format, ai.providerLabel.uppercase()),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.accentCyan,
+                        style = TabularNumericStyle
+                    )
                     Spacer(Modifier.height(4.dp))
                     Text(ai.partialText, fontSize = 11.5.sp, color = palette.textPrimary)
                 }
             }
             is AiChartAnalysisUiState.Success -> {
                 Text(
-                    "${ai.providerLabel} · ${ai.modelName} · ${ai.latencyMs}ms",
+                    stringResource(R.string.ai_success_meta_format, ai.providerLabel, ai.modelName, ai.latencyMs),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.bullGreen,
                     style = TabularNumericStyle
                 )
-                CollapsibleInsightCard("Market Summary", ai.report.marketSummary, true)
-                CollapsibleInsightCard("Key Levels", ai.report.keyLevels, true)
-                CollapsibleInsightCard("Trade Idea", ai.report.tradeIdea, true)
-                CollapsibleInsightCard("Risk Factors", ai.report.riskFactors, false)
-                CollapsibleInsightCard("Alternative Scenario", ai.report.alternativeScenario, false)
+                CollapsibleInsightCard(stringResource(R.string.ai_card_market_summary), ai.report.marketSummary, true)
+                CollapsibleInsightCard(stringResource(R.string.ai_card_key_levels), ai.report.keyLevels, true)
+                CollapsibleInsightCard(stringResource(R.string.ai_card_trade_idea), ai.report.tradeIdea, true)
+                CollapsibleInsightCard(stringResource(R.string.ai_card_risk_factors), ai.report.riskFactors, false)
+                CollapsibleInsightCard(stringResource(R.string.ai_card_alt_scenario), ai.report.alternativeScenario, false)
             }
             is AiChartAnalysisUiState.Error -> {
                 Column(
@@ -183,7 +200,7 @@ fun AiChartAnalystSheet(
                         .padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("${ai.providerLabel} Unavailable: ${ai.message}", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
+                    Text(stringResource(R.string.ai_unavailable_format, ai.providerLabel, ai.message), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
                     Text(ai.quantitativeFallback, fontSize = 11.sp, color = palette.textPrimary)
                 }
             }
@@ -212,7 +229,7 @@ private fun CollapsibleInsightCard(
             Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent)
             Icon(
                 if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = "Toggle $title",
+                contentDescription = stringResource(R.string.cd_toggle_card_format, title),
                 tint = palette.textSecondary,
                 modifier = Modifier.size(18.dp)
             )

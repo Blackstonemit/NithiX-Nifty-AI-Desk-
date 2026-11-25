@@ -1,6 +1,7 @@
 package com.example.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.example.model.ExecutionSafetyMode
 import com.example.security.SecretCipherVault
 
@@ -63,46 +64,48 @@ class SharedPreferencesIndstocksCredentialStore(
     )
 
     override fun loadAccessToken(): String =
-        SecretCipherVault.decrypt(prefs.getString(KEY_ACCESS_TOKEN, "").orEmpty())
+        prefs.getString(KEY_ACCESS_TOKEN, "").orEmpty().let(SecretCipherVault::decrypt)
 
     override fun saveAccessToken(token: String) {
-        val cleaned = token.trim()
-        val stored = if (cleaned.isEmpty()) "" else SecretCipherVault.encrypt(cleaned)
-        prefs.edit().putString(KEY_ACCESS_TOKEN, stored).apply()
+        token.trim()
+            .let { if (it.isEmpty()) "" else SecretCipherVault.encrypt(it) }
+            .also { stored -> prefs.edit { putString(KEY_ACCESS_TOKEN, stored) } }
     }
 
     override fun loadClientId(): String =
-        SecretCipherVault.decrypt(prefs.getString(KEY_CLIENT_ID, "").orEmpty())
+        prefs.getString(KEY_CLIENT_ID, "").orEmpty().let(SecretCipherVault::decrypt)
 
     override fun saveClientId(clientId: String) {
-        val cleaned = clientId.trim()
-        val stored = if (cleaned.isEmpty()) "" else SecretCipherVault.encrypt(cleaned)
-        prefs.edit().putString(KEY_CLIENT_ID, stored).apply()
+        clientId.trim()
+            .let { if (it.isEmpty()) "" else SecretCipherVault.encrypt(it) }
+            .also { stored -> prefs.edit { putString(KEY_CLIENT_ID, stored) } }
     }
 
-    override fun loadExecutionMode(): ExecutionSafetyMode {
-        val raw = prefs.getString(KEY_EXECUTION_MODE, ExecutionSafetyMode.PAPER_SIMULATION.name).orEmpty()
-        return runCatching { ExecutionSafetyMode.valueOf(raw) }
-            .getOrDefault(ExecutionSafetyMode.PAPER_SIMULATION)
-    }
+    override fun loadExecutionMode(): ExecutionSafetyMode =
+        prefs.getString(KEY_EXECUTION_MODE, ExecutionSafetyMode.PAPER_SIMULATION.name)
+            .orEmpty()
+            .let { raw ->
+                runCatching { ExecutionSafetyMode.valueOf(raw) }
+                    .getOrDefault(ExecutionSafetyMode.PAPER_SIMULATION)
+            }
 
     override fun saveExecutionMode(mode: ExecutionSafetyMode) {
-        prefs.edit().putString(KEY_EXECUTION_MODE, mode.name).apply()
+        prefs.edit { putString(KEY_EXECUTION_MODE, mode.name) }
     }
 
     override fun loadLiveRiskAcknowledged(): Boolean =
         prefs.getBoolean(KEY_LIVE_RISK_ACK, false)
 
     override fun saveLiveRiskAcknowledged(acknowledged: Boolean) {
-        prefs.edit().putBoolean(KEY_LIVE_RISK_ACK, acknowledged).apply()
+        prefs.edit { putBoolean(KEY_LIVE_RISK_ACK, acknowledged) }
     }
 
     override fun clearCredentials() {
-        prefs.edit()
-            .remove(KEY_ACCESS_TOKEN)
-            .putString(KEY_EXECUTION_MODE, ExecutionSafetyMode.PAPER_SIMULATION.name)
-            .putBoolean(KEY_LIVE_RISK_ACK, false)
-            .apply()
+        prefs.edit {
+            remove(KEY_ACCESS_TOKEN)
+            putString(KEY_EXECUTION_MODE, ExecutionSafetyMode.PAPER_SIMULATION.name)
+            putBoolean(KEY_LIVE_RISK_ACK, false)
+        }
     }
 
     companion object {

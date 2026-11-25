@@ -196,14 +196,14 @@ class NiftyMarketRepository(
                             dayHigh = max(current.spot.dayHigh, tick.ltp),
                             dayLow = min(current.spot.dayLow, tick.ltp)
                         )
-                        val updatedCandles = current.candles.toMutableList()
-                        if (updatedCandles.isNotEmpty()) {
-                            val last = updatedCandles.last()
-                            updatedCandles[updatedCandles.size - 1] = last.copy(
-                                close = tick.ltp,
-                                high = max(last.high, tick.ltp),
-                                low = min(last.low, tick.ltp)
-                            )
+                        val updatedCandles = current.candles.toMutableList().apply {
+                            lastOrNull()?.let { last ->
+                                this[lastIndex] = last.copy(
+                                    close = tick.ltp,
+                                    high = max(last.high, tick.ltp),
+                                    low = min(last.low, tick.ltp)
+                                )
+                            }
                         }
                         _deskState.value = current.copy(
                             spot = updatedSpot,
@@ -293,7 +293,7 @@ class NiftyMarketRepository(
         customHeaders: Map<String, String> = emptyMap(),
         oauthClientId: String = ""
     ): McpConnectorConfig {
-        val newConnector = McpConnectorConfig(
+        return McpConnectorConfig(
             id = "mcp-${UUID.randomUUID().toString().take(8)}",
             name = name.trim(),
             url = url.trim(),
@@ -306,11 +306,12 @@ class NiftyMarketRepository(
             isBuiltIn = false,
             isEnabled = true,
             status = McpConnectionStatus.DISCONNECTED
-        )
-        val updatedList = _connectorsState.value.connectors + newConnector
-        _connectorsState.value = _connectorsState.value.copy(connectors = updatedList)
-        connectorStore.saveCustomConnectors(updatedList)
-        return newConnector
+        ).also { created ->
+            (_connectorsState.value.connectors + created).also { updatedList ->
+                _connectorsState.value = _connectorsState.value.copy(connectors = updatedList)
+                connectorStore.saveCustomConnectors(updatedList)
+            }
+        }
     }
 
     fun updateCustomConnector(
@@ -325,9 +326,9 @@ class NiftyMarketRepository(
         oauthClientId: String = ""
     ): McpConnectorConfig? {
         var updatedItem: McpConnectorConfig? = null
-        val updatedList = _connectorsState.value.connectors.map { item ->
+        _connectorsState.value.connectors.map { item ->
             if (item.id == connectorId && !item.isBuiltIn) {
-                val edited = item.copy(
+                item.copy(
                     name = name.trim(),
                     url = url.trim(),
                     transportType = transportType,
@@ -339,28 +340,28 @@ class NiftyMarketRepository(
                     status = McpConnectionStatus.DISCONNECTED,
                     sessionId = null,
                     lastError = null
-                )
-                updatedItem = edited
-                edited
+                ).also { updatedItem = it }
             } else {
                 item
             }
+        }.also { updatedList ->
+            _connectorsState.value = _connectorsState.value.copy(connectors = updatedList)
+            connectorStore.saveCustomConnectors(updatedList)
         }
-        _connectorsState.value = _connectorsState.value.copy(connectors = updatedList)
-        connectorStore.saveCustomConnectors(updatedList)
         return updatedItem
     }
 
     fun removeCustomConnector(connectorId: String) {
-        val updatedList = _connectorsState.value.connectors.filterNot { it.id == connectorId && !it.isBuiltIn }
-        val updatedLogs = _connectorsState.value.rpcLogsByConnector - connectorId
-        val updatedResults = _connectorsState.value.lastToolResultsByConnector - connectorId
-        _connectorsState.value = _connectorsState.value.copy(
-            connectors = updatedList,
-            rpcLogsByConnector = updatedLogs,
-            lastToolResultsByConnector = updatedResults
-        )
-        connectorStore.saveCustomConnectors(updatedList)
+        _connectorsState.value.connectors
+            .filterNot { it.id == connectorId && !it.isBuiltIn }
+            .also { updatedList ->
+                _connectorsState.value = _connectorsState.value.copy(
+                    connectors = updatedList,
+                    rpcLogsByConnector = _connectorsState.value.rpcLogsByConnector - connectorId,
+                    lastToolResultsByConnector = _connectorsState.value.lastToolResultsByConnector - connectorId
+                )
+                connectorStore.saveCustomConnectors(updatedList)
+            }
     }
 
     fun toggleConnectorEnabled(connectorId: String) {
@@ -378,11 +379,8 @@ class NiftyMarketRepository(
             }
         }
         _connectorsState.value = _connectorsState.value.copy(connectors = updatedList)
-        if (toggledBuiltIn != null) {
-            connectorStore.saveBuiltInEnabledState(connectorId, toggledBuiltIn!!)
-        } else {
-            connectorStore.saveCustomConnectors(updatedList)
-        }
+        toggledBuiltIn?.let { connectorStore.saveBuiltInEnabledState(connectorId, it) }
+            ?: connectorStore.saveCustomConnectors(updatedList)
     }
 
     suspend fun connectAndDiscoverConnector(connectorId: String) {
@@ -635,21 +633,22 @@ class NiftyMarketRepository(
             statusNotice = "Generating 24h access token via INDstocks TOTP..."
         )
 
-        val tokenResult = indstocksClient.generateToken(cleanClientId, mpin, totp)
         val nextCooldown = System.currentTimeMillis() + 60_000L
-        if (tokenResult.isSuccess) {
-            val newToken = tokenResult.getOrThrow()
-            _indstocksState.value = _indstocksState.value.copy(totpCooldownUntilMs = nextCooldown)
-            saveAndConnectIndstocksToken(newToken, cleanClientId)
-        } else {
-            _indstocksState.value = _indstocksState.value.copy(
-                isBusy = false,
-                status = IndstocksConnectionStatus.ERROR,
-                totpCooldownUntilMs = nextCooldown,
-                statusNotice = null,
-                lastError = tokenResult.exceptionOrNull()?.message ?: "TOTP token generation failed"
-            )
-        }
+        indstocksClient.generateToken(cleanClientId, mpin, totp).fold(
+            onSuccess = { newToken ->
+                _indstocksState.value = _indstocksState.value.copy(totpCooldownUntilMs = nextCooldown)
+                saveAndConnectIndstocksToken(newToken, cleanClientId)
+            },
+            onFailure = { err ->
+                _indstocksState.value = _indstocksState.value.copy(
+                    isBusy = false,
+                    status = IndstocksConnectionStatus.ERROR,
+                    totpCooldownUntilMs = nextCooldown,
+                    statusNotice = null,
+                    lastError = err.message ?: "TOTP token generation failed"
+                )
+            }
+        )
     }
 
     suspend fun saveAndConnectIndstocksToken(
@@ -664,10 +663,9 @@ class NiftyMarketRepository(
             return
         }
 
-        optionalClientId?.trim()?.let { cid ->
-            if (cid.isNotBlank()) indstocksStore.saveClientId(cid)
-        }
-        val effectiveClientId = optionalClientId?.trim()?.takeIf { it.isNotBlank() }
+        val effectiveClientId = optionalClientId?.trim()
+            ?.takeIf { it.isNotBlank() }
+            ?.also(indstocksStore::saveClientId)
             ?: _indstocksState.value.clientId
 
         val startMs = System.currentTimeMillis()
@@ -680,9 +678,8 @@ class NiftyMarketRepository(
             statusNotice = "Verifying INDstocks profile & portfolio..."
         )
 
-        val profileRes = indstocksClient.fetchUserProfile(cleanToken)
-        if (profileRes.isFailure) {
-            val errMsg = profileRes.exceptionOrNull()?.message ?: "Profile verification failed"
+        val profile = indstocksClient.fetchUserProfile(cleanToken).getOrElse { err ->
+            val errMsg = err.message ?: "Profile verification failed"
             val expired = errMsg.contains("401") || errMsg.contains("403")
             _indstocksState.value = _indstocksState.value.copy(
                 isBusy = false,
@@ -694,7 +691,6 @@ class NiftyMarketRepository(
         }
 
         indstocksStore.saveAccessToken(cleanToken)
-        val profile = profileRes.getOrThrow()
         val latency = (System.currentTimeMillis() - startMs).coerceAtLeast(1L)
 
         _indstocksState.value = _indstocksState.value.copy(
@@ -754,9 +750,7 @@ class NiftyMarketRepository(
         val combinedTrades = (drvTrades + eqTrades).distinctBy { "${it.tradeId}_${it.orderId}_${it.tradeSerialNo}" }
         val expiries = expiriesDeferred.await().getOrNull().orEmpty()
         val futContracts = futContractsDeferred.await().getOrNull().orEmpty()
-        if (futContracts.isNotEmpty()) {
-            cachedNiftyFutures = futContracts
-        }
+            .also { if (it.isNotEmpty()) cachedNiftyFutures = it }
 
         // Enrich Holdings & Open Positions with live LTP via /market/quotes/ltp (best-effort)
         val scripCodesToPrice = buildSet {
@@ -778,21 +772,23 @@ class NiftyMarketRepository(
         } else emptyMap()
 
         val enrichedHoldings = rawHoldings?.map { h ->
-            val ltp = ltpMap["${h.exchange.uppercase()}_${h.securityId}"]
-            if (ltp != null && ltp > 0.0) {
-                val pnl = (ltp - h.avgPrice) * h.quantity
-                val pnlPct = if (h.avgPrice > 0.0) ((ltp - h.avgPrice) / h.avgPrice) * 100.0 else 0.0
-                h.copy(lastPrice = ltp, pnl = pnl, pnlPct = pnlPct)
-            } else h
+            ltpMap["${h.exchange.uppercase()}_${h.securityId}"]
+                ?.takeIf { it > 0.0 }
+                ?.let { ltp ->
+                    val pnl = (ltp - h.avgPrice) * h.quantity
+                    val pnlPct = if (h.avgPrice > 0.0) ((ltp - h.avgPrice) / h.avgPrice) * 100.0 else 0.0
+                    h.copy(lastPrice = ltp, pnl = pnl, pnlPct = pnlPct)
+                } ?: h
         }
 
         val enrichedPositions = rawPositions?.map { p ->
             val prefix = if (p.segment.equals("DERIVATIVE", true) || p.segment.equals("FNO", true)) "NFO" else p.exchange.uppercase()
-            val ltp = ltpMap["${prefix}_${p.securityId}"]
-            if (ltp != null && ltp > 0.0 && p.netQty != 0) {
-                val unrealized = (ltp - p.avgPrice) * p.netQty
-                p.copy(lastPrice = ltp, unrealizedPnl = unrealized, mtm = p.realizedPnl + unrealized)
-            } else p
+            ltpMap["${prefix}_${p.securityId}"]
+                ?.takeIf { it > 0.0 && p.netQty != 0 }
+                ?.let { ltp ->
+                    val unrealized = (ltp - p.avgPrice) * p.netQty
+                    p.copy(lastPrice = ltp, unrealizedPnl = unrealized, mtm = p.realizedPnl + unrealized)
+                } ?: p
         }
 
         val latency = (System.currentTimeMillis() - startMs).coerceAtLeast(1L)
@@ -815,8 +811,8 @@ class NiftyMarketRepository(
             lastSyncedAtLabel = formatCurrentIstShort()
         )
 
-        if (funds != null && funds.availableMargin > 0.0) {
-            _deskState.value = _deskState.value.copy(availableCapital = funds.availableMargin)
+        funds?.takeIf { it.availableMargin > 0.0 }?.let {
+            _deskState.value = _deskState.value.copy(availableCapital = it.availableMargin)
         }
     }
 
@@ -1238,14 +1234,14 @@ class NiftyMarketRepository(
                     candles = indCandles,
                     sourceLabel = "INDstocks Live API"
                 )
-                if (vixItem != null && vixItem.lastPrice > 0.0) {
-                    primaryVix = LiveVixQuote(vixValue = vixItem.lastPrice, vixChangePct = vixItem.changePct)
+                vixItem?.takeIf { it.lastPrice > 0.0 }?.let {
+                    primaryVix = LiveVixQuote(vixValue = it.lastPrice, vixChangePct = it.changePct)
                 }
-                if (!targetExpiry.isNullOrBlank()) {
+                targetExpiry?.takeIf { it.isNotBlank() }?.let { expiry ->
                     indstocksClient.fetchOptionChainWithSecurities(
                         accessToken = indstocksToken,
                         spotPrice = niftyItem.lastPrice,
-                        expiry = targetExpiry,
+                        expiry = expiry,
                         indiaVix = primaryVix?.vixValue ?: current.spot.indiaVix,
                         lotSizeHint = brokerState.activeContractLotSize
                     ).getOrNull()?.let { chainRes ->
@@ -1600,16 +1596,15 @@ class NiftyMarketRepository(
             } else order
         }
 
-        val updatedCandles = current.candles.toMutableList()
-        if (updatedCandles.isNotEmpty()) {
-            val last = updatedCandles.last()
-            val newLast = last.copy(
-                high = max(last.high, newSpotPrice),
-                low = min(last.low, newSpotPrice),
-                close = newSpotPrice,
-                volume = last.volume + 350L
-            )
-            updatedCandles[updatedCandles.size - 1] = newLast
+        val updatedCandles = current.candles.toMutableList().apply {
+            lastOrNull()?.let { last ->
+                this[lastIndex] = last.copy(
+                    high = max(last.high, newSpotPrice),
+                    low = min(last.low, newSpotPrice),
+                    close = newSpotPrice,
+                    volume = last.volume + 350L
+                )
+            }
         }
 
         _deskState.value = current.copy(
@@ -2099,22 +2094,22 @@ class NiftyMarketRepository(
         }
 
         val stepMs = tf.minutes * 60 * 1000L
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
-        if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
-            cal.add(Calendar.DATE, -2)
-        } else if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
-            cal.add(Calendar.DATE, -1)
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata")).apply {
+            when (get(Calendar.DAY_OF_WEEK)) {
+                Calendar.SUNDAY -> add(Calendar.DATE, -2)
+                Calendar.SATURDAY -> add(Calendar.DATE, -1)
+            }
+            set(Calendar.HOUR_OF_DAY, 9)
+            set(Calendar.MINUTE, 15)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
-        cal.set(Calendar.HOUR_OF_DAY, 9)
-        cal.set(Calendar.MINUTE, 15)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
         val baseTime = cal.timeInMillis
 
         var runningVwapNum = 0.0
         var runningVwapDen = 0.0
 
-        for (i in 0 until count) {
+        repeat(count) { i ->
             val drift = when (trend) {
                 MarketBias.BULLISH -> (i.toDouble() / count) * 4.5
                 MarketBias.BEARISH -> -(i.toDouble() / count) * 4.5
@@ -2146,16 +2141,15 @@ class NiftyMarketRepository(
             price = close
         }
 
-        if (candles.isNotEmpty()) {
-            val last = candles.last()
-            candles[candles.size - 1] = last.copy(
-                close = currentPrice,
-                high = max(last.high, currentPrice),
-                low = min(last.low, currentPrice)
-            )
+        return candles.apply {
+            lastOrNull()?.let { last ->
+                this[lastIndex] = last.copy(
+                    close = currentPrice,
+                    high = max(last.high, currentPrice),
+                    low = min(last.low, currentPrice)
+                )
+            }
         }
-
-        return candles
     }
 
     private fun computeTechnicals(candles: List<Candle>, currentSpot: Double): TechnicalAnalysisSnapshot {
@@ -2212,39 +2206,39 @@ class NiftyMarketRepository(
         )
     }
 
-    private fun computeWeeklyExpiryLabel(): String {
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
-        val diff = (Calendar.THURSDAY - cal.get(Calendar.DAY_OF_WEEK) + 7) % 7
-        cal.add(Calendar.DATE, diff)
-        val sdf = SimpleDateFormat("dd-MMM-yyyy", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("Asia/Kolkata")
+    private fun computeWeeklyExpiryLabel(): String =
+        Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata")).apply {
+            add(Calendar.DATE, (Calendar.THURSDAY - get(Calendar.DAY_OF_WEEK) + 7) % 7)
+        }.let { cal ->
+            SimpleDateFormat("dd-MMM-yyyy", Locale.US)
+                .apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+                .format(cal.time)
+                .uppercase(Locale.US)
         }
-        return sdf.format(cal.time).uppercase(Locale.US)
-    }
 
     private fun computeMonthlyExpiryLabel(monthOffset: Int = 0): String {
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
-        if (monthOffset != 0) cal.add(Calendar.MONTH, monthOffset)
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-        while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.THURSDAY) {
-            cal.add(Calendar.DATE, -1)
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata")).apply {
+            if (monthOffset != 0) add(Calendar.MONTH, monthOffset)
+            set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+            while (get(Calendar.DAY_OF_WEEK) != Calendar.THURSDAY) {
+                add(Calendar.DATE, -1)
+            }
         }
         val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kolkata"))
         if (monthOffset == 0 && cal.before(today) && cal.get(Calendar.DAY_OF_YEAR) != today.get(Calendar.DAY_OF_YEAR)) {
             return computeMonthlyExpiryLabel(1)
         }
-        val sdf = SimpleDateFormat("dd-MMM-yyyy", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("Asia/Kolkata")
-        }
-        return sdf.format(cal.time).uppercase(Locale.US)
+        return SimpleDateFormat("dd-MMM-yyyy", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            .format(cal.time)
+            .uppercase(Locale.US)
     }
 
     private fun computeNextMonthExpiryLabel(): String = computeMonthlyExpiryLabel(1)
 
-    private fun formatCurrentIstShort(): String {
-        val sdf = SimpleDateFormat("hh:mm:ss a", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("Asia/Kolkata")
-        }
-        return "${sdf.format(Date())} IST"
-    }
+    private fun formatCurrentIstShort(): String =
+        SimpleDateFormat("hh:mm:ss a", Locale.US)
+            .apply { timeZone = TimeZone.getTimeZone("Asia/Kolkata") }
+            .format(Date())
+            .let { "$it IST" }
 }

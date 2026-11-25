@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [NiftyOHLCVEntity::class],
     version = 2,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(NiftyTypeConverters::class)
 abstract class NiftyDatabase : RoomDatabase() {

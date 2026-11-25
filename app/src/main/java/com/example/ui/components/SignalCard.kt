@@ -33,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.FinalTradeRecommendation
 import com.example.model.SignalType
 import com.example.ui.theme.LocalChartPalette
@@ -113,12 +115,14 @@ fun SignalCard(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = when {
-                        recommendation.confidenceScore >= 85 -> "VERY STRONG"
-                        recommendation.confidenceScore >= 75 -> "STRONG"
-                        recommendation.confidenceScore >= 60 -> "MODERATE"
-                        else -> "CAPITAL DEFENSE"
-                    },
+                    text = stringResource(
+                        when {
+                            recommendation.confidenceScore >= 85 -> R.string.confidence_very_strong
+                            recommendation.confidenceScore >= 75 -> R.string.confidence_strong
+                            recommendation.confidenceScore >= 60 -> R.string.confidence_moderate
+                            else -> R.string.confidence_capital_defense
+                        }
+                    ),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textSecondary,
@@ -136,7 +140,7 @@ fun SignalCard(
                     strokeWidth = 4.dp
                 )
                 Text(
-                    text = "${recommendation.confidenceScore}%",
+                    text = stringResource(R.string.confidence_pct_format, recommendation.confidenceScore),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary,
@@ -156,7 +160,7 @@ fun SignalCard(
             fontFamily = FontFamily.Monospace
         )
         Text(
-            text = "Strategy: ${recommendation.strategyName}",
+            text = stringResource(R.string.signal_strategy_format, recommendation.strategyName),
             fontSize = 11.sp,
             color = palette.accentCyan
         )
@@ -173,10 +177,10 @@ fun SignalCard(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                LevelItem(label = "ENTRY ZONE", value = recommendation.entryZone, color = palette.textPrimary)
-                LevelItem(label = "STOP-LOSS", value = recommendation.stopLoss, color = palette.bearRed)
-                LevelItem(label = "TARGET 1", value = recommendation.target1, color = palette.bullGreen)
-                LevelItem(label = "R : R", value = recommendation.riskToReward, color = palette.goldAccent)
+                LevelItem(label = stringResource(R.string.label_entry_zone), value = recommendation.entryZone, color = palette.textPrimary)
+                LevelItem(label = stringResource(R.string.label_stop_loss), value = recommendation.stopLoss, color = palette.bearRed)
+                LevelItem(label = stringResource(R.string.label_target_1), value = recommendation.target1, color = palette.bullGreen)
+                LevelItem(label = stringResource(R.string.label_risk_reward), value = recommendation.riskToReward, color = palette.goldAccent)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -189,9 +193,9 @@ fun SignalCard(
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                LevelItem(label = "TARGET 2", value = recommendation.target2, color = palette.bullGreen)
-                LevelItem(label = "TARGET 3", value = recommendation.target3, color = palette.bullGreen)
-                LevelItem(label = "HORIZON", value = recommendation.expectedHoldingPeriod, color = palette.textSecondary)
+                LevelItem(label = stringResource(R.string.label_target_2), value = recommendation.target2, color = palette.bullGreen)
+                LevelItem(label = stringResource(R.string.label_target_3), value = recommendation.target3, color = palette.bullGreen)
+                LevelItem(label = stringResource(R.string.label_horizon), value = recommendation.expectedHoldingPeriod, color = palette.textSecondary)
             }
         } else {
             // No trade box
@@ -226,7 +230,7 @@ fun SignalCard(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Invalidation: ${recommendation.setupInvalidationLevel}",
+                text = stringResource(R.string.signal_invalidation_format, recommendation.setupInvalidationLevel),
                 fontSize = 11.sp,
                 color = palette.textSecondary,
                 fontFamily = FontFamily.Monospace
@@ -249,13 +253,13 @@ fun SignalCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Authorize",
+                        contentDescription = stringResource(R.string.cd_authorize),
                         tint = Color.Black,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "AUTHORIZE ORDER (${recommendation.signal.label})",
+                        text = stringResource(R.string.action_authorize_order_format, recommendation.signal.label),
                         color = Color.Black,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 13.sp,

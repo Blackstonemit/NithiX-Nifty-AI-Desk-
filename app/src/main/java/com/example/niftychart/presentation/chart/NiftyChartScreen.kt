@@ -43,11 +43,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.niftychart.data.remote.SampleNiftyDataCatalog
 import com.example.niftychart.domain.model.ChartInterval
 import com.example.niftychart.domain.model.FeedConnectionStatus
@@ -113,16 +115,16 @@ fun NiftyChartScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    if (onNavigateBack != null) {
+                    onNavigateBack?.let { navigateBack ->
                         IconButton(
-                            onClick = onNavigateBack,
+                            onClick = navigateBack,
                             modifier = Modifier
                                 .minimumInteractiveComponentSize()
                                 .testTag("nifty_chart_back_button")
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.cd_back),
                                 tint = palette.textPrimary
                             )
                         }
@@ -136,13 +138,13 @@ fun NiftyChartScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "NIFTY 50 ROOM TERMINAL",
+                            text = stringResource(R.string.nifty_terminal_title),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = palette.textPrimary
                         )
                         Text(
-                            text = "Offline OHLCV • SMA & Wilder RSI",
+                            text = stringResource(R.string.nifty_terminal_subtitle),
                             fontSize = 10.sp,
                             color = palette.textSecondary
                         )
@@ -158,7 +160,9 @@ fun NiftyChartScreen(
                     ) {
                         Icon(
                             imageVector = if (uiState.isStreamingActive) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (uiState.isStreamingActive) "Pause tick stream" else "Start tick stream",
+                            contentDescription = stringResource(
+                                if (uiState.isStreamingActive) R.string.cd_pause_tick_stream else R.string.cd_start_tick_stream
+                            ),
                             tint = if (uiState.isStreamingActive) palette.bullGreen else palette.accentCyan
                         )
                     }
@@ -170,7 +174,7 @@ fun NiftyChartScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Sync historical candles",
+                            contentDescription = stringResource(R.string.cd_sync_historical_candles),
                             tint = palette.textPrimary
                         )
                     }
@@ -182,7 +186,7 @@ fun NiftyChartScreen(
                     ) {
                         Icon(
                             imageVector = if (uiState.isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                            contentDescription = "Switch dark or light chart theme",
+                            contentDescription = stringResource(R.string.cd_switch_chart_theme),
                             tint = palette.goldAccent
                         )
                     }
@@ -246,11 +250,13 @@ fun NiftyChartScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (uiState.isCrosshairLocked) {
-                    "Crosshair locked • drag to inspect, tap to unlock"
-                } else {
-                    "Drag to scroll • pinch to zoom • long-press to inspect"
-                },
+                text = stringResource(
+                    if (uiState.isCrosshairLocked) {
+                        R.string.hint_crosshair_locked
+                    } else {
+                        R.string.hint_chart_gestures
+                    }
+                ),
                 fontSize = 10.sp,
                 color = palette.textMuted,
                 modifier = Modifier.weight(1f)
@@ -258,19 +264,19 @@ fun NiftyChartScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 CompactChartToolButton(
                     icon = Icons.Default.ZoomIn,
-                    contentDescription = "Zoom in",
+                    contentDescription = stringResource(R.string.cd_zoom_in),
                     onClick = onZoomIn,
                     tag = "chart_zoom_in"
                 )
                 CompactChartToolButton(
                     icon = Icons.Default.ZoomOut,
-                    contentDescription = "Zoom out",
+                    contentDescription = stringResource(R.string.cd_zoom_out),
                     onClick = onZoomOut,
                     tag = "chart_zoom_out"
                 )
                 CompactChartToolButton(
                     icon = Icons.Default.FitScreen,
-                    contentDescription = "Reset viewport",
+                    contentDescription = stringResource(R.string.cd_reset_viewport),
                     onClick = onResetViewport,
                     tag = "chart_reset_zoom"
                 )
@@ -294,7 +300,10 @@ fun NiftyChartScreen(
                         CircularProgressIndicator(color = palette.accentCyan)
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Loading ${uiState.selectedInterval.code} candles from Room…",
+                            text = stringResource(
+                                R.string.loading_room_candles_format,
+                                uiState.selectedInterval.code
+                            ),
                             fontSize = 12.sp,
                             color = palette.textSecondary
                         )
@@ -323,14 +332,20 @@ fun NiftyChartScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = uiState.errorMessage ?: "No stored OHLCV bars for ${uiState.selectedInterval.displayLabel}.",
+                            text = uiState.errorMessage ?: stringResource(
+                                R.string.empty_room_candles_format,
+                                uiState.selectedInterval.displayLabel
+                            ),
                             style = MaterialTheme.typography.bodyMedium,
                             color = palette.textSecondary,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(onClick = onRefresh) {
-                            Text("Sync NIFTY 50 Data", style = TabularNumericStyle)
+                            Text(
+                                text = stringResource(R.string.action_sync_nifty_data),
+                                style = TabularNumericStyle
+                            )
                         }
                     }
                 }

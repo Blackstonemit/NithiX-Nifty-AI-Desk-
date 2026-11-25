@@ -34,10 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.LlmProviderConfig
 import com.example.ui.theme.ChartThemeMode
 import com.example.ui.theme.LocalChartPalette
@@ -76,7 +78,7 @@ fun SettingsLlmAndThemeSection(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                "WORKSTATION VISUAL THEME",
+                stringResource(R.string.settings_workstation_theme_header),
                 fontSize = 10.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.goldAccent,
@@ -120,7 +122,7 @@ fun SettingsLlmAndThemeSection(
                 Icon(Icons.Default.Psychology, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "MULTI-LLM AI ANALYST PROVIDERS",
+                    stringResource(R.string.settings_multi_llm_header),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.accentCyan,
@@ -128,7 +130,7 @@ fun SettingsLlmAndThemeSection(
                 )
             }
             Text(
-                "Google Gemini runs keyless via Firebase AI Logic + App Check. Optionally configure local Ollama, NVIDIA NIM, OpenAI, or Anthropic Claude endpoints.",
+                stringResource(R.string.settings_multi_llm_desc),
                 fontSize = 11.sp,
                 color = palette.textSecondary
             )
@@ -193,17 +195,33 @@ private fun LlmConfigEditorCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(config.providerType.displayName, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
-                Text("Model: ${config.modelName}", fontSize = 10.sp, color = palette.textSecondary, style = TabularNumericStyle)
+                Text(
+                    stringResource(R.string.settings_llm_model_format, config.modelName),
+                    fontSize = 10.sp,
+                    color = palette.textSecondary,
+                    style = TabularNumericStyle
+                )
             }
             if (config.isActive) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = "Active provider", tint = palette.bullGreen, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = stringResource(R.string.cd_active_provider),
+                        tint = palette.bullGreen,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(Modifier.width(4.dp))
-                    Text("ACTIVE", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = palette.bullGreen, style = TabularNumericStyle)
+                    Text(
+                        stringResource(R.string.settings_llm_active),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = palette.bullGreen,
+                        style = TabularNumericStyle
+                    )
                 }
             } else {
                 OutlinedButton(onClick = onActivate) {
-                    Text("Use", fontSize = 10.sp)
+                    Text(stringResource(R.string.settings_llm_use), fontSize = 10.sp)
                 }
             }
         }
@@ -213,7 +231,7 @@ private fun LlmConfigEditorCard(
                 OutlinedTextField(
                     value = baseUrl,
                     onValueChange = { baseUrl = it },
-                    label = { Text("Endpoint URL", fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.settings_llm_endpoint_url), fontSize = 11.sp) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -221,7 +239,7 @@ private fun LlmConfigEditorCard(
             OutlinedTextField(
                 value = modelName,
                 onValueChange = { modelName = it },
-                label = { Text("Model ID", fontSize = 11.sp) },
+                label = { Text(stringResource(R.string.settings_llm_model_id), fontSize = 11.sp) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -229,7 +247,7 @@ private fun LlmConfigEditorCard(
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it },
-                    label = { Text("API Key (stored locally on device)", fontSize = 11.sp) },
+                    label = { Text(stringResource(R.string.settings_llm_api_key_label), fontSize = 11.sp) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
@@ -250,7 +268,7 @@ private fun LlmConfigEditorCard(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(containerColor = palette.accentCyan, contentColor = Color.Black)
                 ) {
-                    Text("Save & Activate", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.settings_llm_save_activate), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 OutlinedButton(
                     onClick = {
@@ -261,7 +279,7 @@ private fun LlmConfigEditorCard(
                     if (isTesting) {
                         CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Test Ping", fontSize = 11.sp)
+                        Text(stringResource(R.string.settings_llm_test_ping), fontSize = 11.sp)
                     }
                 }
             }

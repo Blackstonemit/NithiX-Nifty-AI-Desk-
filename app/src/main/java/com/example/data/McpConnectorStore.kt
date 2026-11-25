@@ -1,6 +1,7 @@
 package com.example.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.example.model.McpAuthType
 import com.example.model.McpConnectorConfig
 import com.example.model.McpTransportType
@@ -47,11 +48,11 @@ class SharedPreferencesMcpConnectorStore(
         return try {
             val arr = JSONArray(raw)
             buildList {
-                for (i in 0 until arr.length()) {
-                    val obj = arr.optJSONObject(i) ?: continue
-                    val id = obj.optString("id").takeIf { it.isNotBlank() } ?: continue
-                    val name = obj.optString("name").takeIf { it.isNotBlank() } ?: continue
-                    val url = obj.optString("url").takeIf { it.isNotBlank() } ?: continue
+                repeat(arr.length()) { i ->
+                    val obj = arr.optJSONObject(i) ?: return@repeat
+                    val id = obj.optString("id").takeIf { it.isNotBlank() } ?: return@repeat
+                    val name = obj.optString("name").takeIf { it.isNotBlank() } ?: return@repeat
+                    val url = obj.optString("url").takeIf { it.isNotBlank() } ?: return@repeat
                     val transport = runCatching {
                         McpTransportType.valueOf(obj.optString("transportType", McpTransportType.STREAMABLE_HTTP.name))
                     }.getOrDefault(McpTransportType.STREAMABLE_HTTP)
@@ -60,11 +61,9 @@ class SharedPreferencesMcpConnectorStore(
                     }.getOrDefault(McpAuthType.NONE)
                     val headersObj = obj.optJSONObject("customHeaders")
                     val headers = buildMap {
-                        if (headersObj != null) {
-                            val keys = headersObj.keys()
-                            while (keys.hasNext()) {
-                                val k = keys.next()
-                                put(k, headersObj.optString(k))
+                        headersObj?.let { jsonHeaders ->
+                            jsonHeaders.keys().forEach { k ->
+                                put(k, jsonHeaders.optString(k))
                             }
                         }
                     }
@@ -111,7 +110,7 @@ class SharedPreferencesMcpConnectorStore(
             }
             arr.put(obj)
         }
-        prefs.edit().putString(KEY_CUSTOM_CONNECTORS, arr.toString()).apply()
+        prefs.edit { putString(KEY_CUSTOM_CONNECTORS, arr.toString()) }
     }
 
     override fun loadBuiltInEnabledStates(): Map<String, Boolean> {
@@ -132,11 +131,13 @@ class SharedPreferencesMcpConnectorStore(
     }
 
     override fun saveBuiltInEnabledState(connectorId: String, enabled: Boolean) {
-        val current = loadBuiltInEnabledStates().toMutableMap()
-        current[connectorId] = enabled
-        val obj = JSONObject()
-        current.forEach { (k, v) -> obj.put(k, v) }
-        prefs.edit().putString(KEY_BUILTIN_STATES, obj.toString()).apply()
+        val current = loadBuiltInEnabledStates().toMutableMap().apply {
+            this[connectorId] = enabled
+        }
+        val obj = JSONObject().apply {
+            current.forEach { (k, v) -> put(k, v) }
+        }
+        prefs.edit { putString(KEY_BUILTIN_STATES, obj.toString()) }
     }
 
     companion object {

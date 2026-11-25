@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.model.McpConnectorConfig
 import com.example.model.McpPendingOAuthFlow
 import com.example.ui.theme.LocalChartPalette
@@ -137,7 +139,7 @@ fun McpOAuthAuthorizeDialog(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Authorize ${connector.name}",
+                            text = stringResource(R.string.oauth_authorize_title_format, connector.name),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary,
@@ -163,7 +165,7 @@ fun McpOAuthAuthorizeDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close authorization dialog",
+                        contentDescription = stringResource(R.string.cd_close_oauth),
                         tint = palette.textMuted
                     )
                 }
@@ -187,7 +189,7 @@ fun McpOAuthAuthorizeDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "MCP OAUTH 2.1 (PKCE S256)",
+                        text = stringResource(R.string.oauth_pkce_header),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.goldAccent,
@@ -201,31 +203,32 @@ fun McpOAuthAuthorizeDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh OAuth metadata",
+                            contentDescription = stringResource(R.string.cd_refresh_oauth_meta),
                             tint = palette.accentCyan,
                             modifier = Modifier.size(13.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Discover", fontSize = 10.sp, color = palette.accentCyan)
+                        Text(stringResource(R.string.oauth_discover), fontSize = 10.sp, color = palette.accentCyan)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
 
                 if (meta != null) {
-                    MetadataLine("Issuer", meta.issuer ?: meta.resourceUrl)
-                    MetadataLine("Authorize", meta.authorizationEndpoint ?: "Not discovered")
-                    MetadataLine("Token", meta.tokenEndpoint ?: "Not discovered")
+                    val notDiscovered = stringResource(R.string.oauth_not_discovered)
+                    MetadataLine(stringResource(R.string.oauth_meta_issuer), meta.issuer ?: meta.resourceUrl)
+                    MetadataLine(stringResource(R.string.oauth_meta_authorize), meta.authorizationEndpoint ?: notDiscovered)
+                    MetadataLine(stringResource(R.string.oauth_meta_token), meta.tokenEndpoint ?: notDiscovered)
                     MetadataLine(
-                        "Client Reg",
-                        meta.registrationEndpoint ?: "Manual Client ID / Pre-registered"
+                        stringResource(R.string.oauth_meta_client_reg),
+                        meta.registrationEndpoint ?: stringResource(R.string.oauth_manual_client_fallback)
                     )
                     if (meta.scopesSupported.isNotEmpty()) {
-                        MetadataLine("Scopes", meta.scopesSupported.joinToString(" "))
+                        MetadataLine(stringResource(R.string.oauth_meta_scopes), meta.scopesSupported.joinToString(" "))
                     }
                 } else {
                     Text(
-                        text = "Remote MCP server returned HTTP 401. Tap Discover or launch OAuth 2.1 browser authorization, or paste a Bearer token below.",
+                        text = stringResource(R.string.oauth_401_notice),
                         fontSize = 11.sp,
                         color = palette.textSecondary,
                         lineHeight = 15.sp
@@ -260,8 +263,8 @@ fun McpOAuthAuthorizeDialog(
             OutlinedTextField(
                 value = explicitClientId,
                 onValueChange = { explicitClientId = it },
-                label = { Text("OAuth Client ID (optional if auto-registered)") },
-                placeholder = { Text("Auto-discovered via /register", color = palette.textMuted) },
+                label = { Text(stringResource(R.string.oauth_client_id_label)) },
+                placeholder = { Text(stringResource(R.string.oauth_client_id_placeholder), color = palette.textMuted) },
                 singleLine = true,
                 colors = fieldColors,
                 modifier = Modifier
@@ -272,7 +275,7 @@ fun McpOAuthAuthorizeDialog(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "REDIRECT CALLBACK MODE",
+                text = stringResource(R.string.oauth_redirect_mode_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -283,7 +286,10 @@ fun McpOAuthAuthorizeDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf(false to "Loopback (127.0.0.1)", true to "App Deep Link").forEach { (customFlag, label) ->
+                listOf(
+                    false to stringResource(R.string.oauth_mode_loopback),
+                    true to stringResource(R.string.oauth_mode_deep_link)
+                ).forEach { (customFlag, label) ->
                     val selected = useCustomScheme == customFlag
                     Box(
                         modifier = Modifier
@@ -334,7 +340,7 @@ fun McpOAuthAuthorizeDialog(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Authorizing...", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.oauth_authorizing), fontWeight = FontWeight.Bold)
                 } else {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
@@ -342,7 +348,7 @@ fun McpOAuthAuthorizeDialog(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Sign In in Browser (OAuth 2.1)", fontWeight = FontWeight.ExtraBold)
+                    Text(stringResource(R.string.oauth_sign_in_browser), fontWeight = FontWeight.ExtraBold)
                 }
             }
 
@@ -357,7 +363,7 @@ fun McpOAuthAuthorizeDialog(
                         .padding(10.dp)
                 ) {
                     Text(
-                        text = "Browser opened — waiting for redirect (${activeFlow.redirectUri}). If your browser didn't auto-return, paste the redirected URL or code below:",
+                        text = stringResource(R.string.oauth_browser_opened_format, activeFlow.redirectUri),
                         fontSize = 10.5.sp,
                         color = palette.textSecondary,
                         lineHeight = 14.sp
@@ -366,8 +372,8 @@ fun McpOAuthAuthorizeDialog(
                     OutlinedTextField(
                         value = manualCodeOrUrl,
                         onValueChange = { manualCodeOrUrl = it },
-                        label = { Text("Redirect Callback URL or Auth Code") },
-                        placeholder = { Text("Paste ?code=... URL here", color = palette.textMuted) },
+                        label = { Text(stringResource(R.string.oauth_callback_label)) },
+                        placeholder = { Text(stringResource(R.string.oauth_callback_placeholder), color = palette.textMuted) },
                         singleLine = true,
                         colors = fieldColors,
                         modifier = Modifier
@@ -385,7 +391,7 @@ fun McpOAuthAuthorizeDialog(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            "Exchange Code & Connect",
+                            stringResource(R.string.oauth_exchange_connect),
                             color = palette.goldAccent,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.5.sp
@@ -411,14 +417,14 @@ fun McpOAuthAuthorizeDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Or paste an existing Bearer Access Token",
+                    text = stringResource(R.string.oauth_bearer_toggle),
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Medium,
                     color = palette.textSecondary
                 )
                 Icon(
                     imageVector = if (showTokenFallback) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = "Toggle manual bearer token",
+                    contentDescription = stringResource(R.string.cd_toggle_manual_bearer),
                     tint = palette.textMuted
                 )
             }
@@ -428,8 +434,8 @@ fun McpOAuthAuthorizeDialog(
                 OutlinedTextField(
                     value = manualToken,
                     onValueChange = { manualToken = it },
-                    label = { Text("Bearer Access Token") },
-                    placeholder = { Text("Paste session / OAuth access token", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.oauth_bearer_label)) },
+                    placeholder = { Text(stringResource(R.string.oauth_bearer_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     colors = fieldColors,
                     modifier = Modifier
@@ -447,7 +453,7 @@ fun McpOAuthAuthorizeDialog(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        "Save Token & Connect",
+                        stringResource(R.string.oauth_save_token_connect),
                         color = palette.accentCyan,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.5.sp

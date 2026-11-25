@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.model.McpAuthType
 import com.example.model.McpConnectorConfig
 import com.example.model.McpTransportType
@@ -83,8 +85,9 @@ fun AddCustomConnectorDialog(
     var authType by remember {
         mutableStateOf(initialConnector?.authType ?: McpAuthType.NONE)
     }
+    val defaultHeaderName = stringResource(R.string.add_connector_header_name_placeholder)
     var authHeaderName by remember {
-        mutableStateOf(initialConnector?.authHeaderName ?: "X-API-Key")
+        mutableStateOf(initialConnector?.authHeaderName ?: defaultHeaderName)
     }
     var authSecret by remember {
         mutableStateOf(initialConnector?.authSecret ?: "")
@@ -105,6 +108,7 @@ fun AddCustomConnectorDialog(
 
     var nameError by remember { mutableStateOf<String?>(null) }
     var urlError by remember { mutableStateOf<String?>(null) }
+    val nameRequiredMessage = stringResource(R.string.add_connector_name_required)
 
     val palette = LocalChartPalette.current
     val onAccent = MaterialTheme.colorScheme.onPrimary
@@ -164,13 +168,15 @@ fun AddCustomConnectorDialog(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isEditing) "Edit custom connector" else "Add custom connector",
+                            text = stringResource(
+                                if (isEditing) R.string.add_connector_edit_title else R.string.add_connector_add_title
+                            ),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary
                         )
                         Text(
-                            text = "Connect a remote MCP server (JSON-RPC 2.0)",
+                            text = stringResource(R.string.add_connector_subtitle),
                             fontSize = 11.sp,
                             color = palette.textSecondary
                         )
@@ -185,7 +191,7 @@ fun AddCustomConnectorDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close add connector dialog",
+                        contentDescription = stringResource(R.string.cd_close_add_connector),
                         tint = palette.textMuted
                     )
                 }
@@ -200,8 +206,8 @@ fun AddCustomConnectorDialog(
                     name = it
                     if (nameError != null) nameError = null
                 },
-                label = { Text("Name") },
-                placeholder = { Text("e.g. Market Analytics MCP", color = palette.textMuted) },
+                label = { Text(stringResource(R.string.add_connector_name_label)) },
+                placeholder = { Text(stringResource(R.string.add_connector_name_placeholder), color = palette.textMuted) },
                 isError = nameError != null,
                 supportingText = nameError?.let { err -> { Text(err, color = palette.bearRed, fontSize = 11.sp) } },
                 singleLine = true,
@@ -220,13 +226,13 @@ fun AddCustomConnectorDialog(
                     serverUrl = it
                     if (urlError != null) urlError = null
                 },
-                label = { Text("Remote MCP server URL") },
-                placeholder = { Text("https://mcp.example.com/mcp", color = palette.textMuted) },
+                label = { Text(stringResource(R.string.add_connector_url_label)) },
+                placeholder = { Text(stringResource(R.string.add_connector_url_placeholder), color = palette.textMuted) },
                 isError = urlError != null,
                 supportingText = urlError?.let { err -> { Text(err, color = palette.bearRed, fontSize = 11.sp) } }
                     ?: {
                         Text(
-                            "Supports Streamable HTTP or SSE JSON-RPC endpoints",
+                            stringResource(R.string.add_connector_url_support_hint),
                             color = palette.textMuted,
                             fontSize = 10.sp
                         )
@@ -242,7 +248,7 @@ fun AddCustomConnectorDialog(
 
             // Transport Type
             Text(
-                text = "TRANSPORT PROTOCOL",
+                text = stringResource(R.string.add_connector_transport_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -284,7 +290,7 @@ fun AddCustomConnectorDialog(
 
             // Authentication Section
             Text(
-                text = "AUTHENTICATION",
+                text = stringResource(R.string.add_connector_auth_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -332,12 +338,12 @@ fun AddCustomConnectorDialog(
                 OutlinedTextField(
                     value = oauthClientId,
                     onValueChange = { oauthClientId = it },
-                    label = { Text("OAuth Client ID (optional)") },
-                    placeholder = { Text("Leave blank for auto-discovery / registration", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.add_connector_oauth_client_label)) },
+                    placeholder = { Text(stringResource(R.string.add_connector_oauth_client_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     supportingText = {
                         Text(
-                            "Server will prompt browser OAuth 2.1 + PKCE sign-in automatically.",
+                            stringResource(R.string.add_connector_oauth_client_hint),
                             color = palette.textMuted,
                             fontSize = 10.sp
                         )
@@ -354,8 +360,8 @@ fun AddCustomConnectorDialog(
                 OutlinedTextField(
                     value = authHeaderName,
                     onValueChange = { authHeaderName = it },
-                    label = { Text("Header Name") },
-                    placeholder = { Text("X-API-Key", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.add_connector_header_name_label)) },
+                    placeholder = { Text(stringResource(R.string.add_connector_header_name_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     colors = textFieldColors,
                     modifier = Modifier
@@ -371,10 +377,16 @@ fun AddCustomConnectorDialog(
                     onValueChange = { authSecret = it },
                     label = {
                         Text(
-                            if (authType == McpAuthType.BEARER_TOKEN) "Bearer Token" else "API Key Secret"
+                            stringResource(
+                                if (authType == McpAuthType.BEARER_TOKEN) {
+                                    R.string.add_connector_bearer_token_label
+                                } else {
+                                    R.string.add_connector_api_key_label
+                                }
+                            )
                         )
                     },
-                    placeholder = { Text("Enter token or secret", color = palette.textMuted) },
+                    placeholder = { Text(stringResource(R.string.add_connector_secret_placeholder), color = palette.textMuted) },
                     singleLine = true,
                     visualTransformation = if (showSecret) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -384,7 +396,9 @@ fun AddCustomConnectorDialog(
                         ) {
                             Icon(
                                 imageVector = if (showSecret) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (showSecret) "Hide secret" else "Show secret",
+                                contentDescription = stringResource(
+                                    if (showSecret) R.string.cd_hide_secret else R.string.cd_show_secret
+                                ),
                                 tint = palette.textSecondary
                             )
                         }
@@ -411,14 +425,14 @@ fun AddCustomConnectorDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Advanced settings (custom HTTP headers)",
+                    text = stringResource(R.string.add_connector_advanced_toggle),
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Medium,
                     color = palette.textSecondary
                 )
                 Icon(
                     imageVector = if (showAdvanced) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = "Toggle advanced settings",
+                    contentDescription = stringResource(R.string.cd_toggle_advanced),
                     tint = palette.textMuted
                 )
             }
@@ -428,8 +442,8 @@ fun AddCustomConnectorDialog(
                 OutlinedTextField(
                     value = customHeadersText,
                     onValueChange = { customHeadersText = it },
-                    label = { Text("Custom Headers (Key: Value per line)") },
-                    placeholder = { Text("X-Client-Id: nifty-desk", color = palette.textMuted) },
+                    label = { Text(stringResource(R.string.add_connector_custom_headers_label)) },
+                    placeholder = { Text(stringResource(R.string.add_connector_custom_headers_placeholder), color = palette.textMuted) },
                     minLines = 2,
                     maxLines = 4,
                     colors = textFieldColors,
@@ -460,7 +474,7 @@ fun AddCustomConnectorDialog(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Run initialize & tools/list discovery immediately",
+                    text = stringResource(R.string.add_connector_auto_connect),
                     fontSize = 12.sp,
                     color = palette.textPrimary
                 )
@@ -480,14 +494,18 @@ fun AddCustomConnectorDialog(
                         .minimumInteractiveComponentSize(),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Cancel", color = palette.textSecondary, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        stringResource(R.string.action_cancel),
+                        color = palette.textSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
 
                 Button(
                     onClick = {
                         val trimmedName = name.trim()
                         val trimmedUrl = serverUrl.trim()
-                        val errName = if (trimmedName.isBlank()) "Connector name is required" else null
+                        val errName = if (trimmedName.isBlank()) nameRequiredMessage else null
                         val errUrl = validateUrl(trimmedUrl)
                         nameError = errName
                         urlError = errUrl
@@ -517,7 +535,7 @@ fun AddCustomConnectorDialog(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = if (isEditing) "Save" else "Add",
+                        text = stringResource(if (isEditing) R.string.action_save else R.string.action_add),
                         fontWeight = FontWeight.Bold
                     )
                 }

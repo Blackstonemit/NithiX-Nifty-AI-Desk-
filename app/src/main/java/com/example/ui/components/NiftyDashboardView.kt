@@ -30,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.MarketSessionStatus
 import com.example.model.Candle
 import com.example.model.ChartType
@@ -63,7 +65,7 @@ fun NiftyDashboardView(
     sessionStatus: MarketSessionStatus? = null,
     isStreaming: Boolean = false,
     isLiveMarketData: Boolean = false,
-    dataSourceLabel: String = "Cached NSE Reference",
+    dataSourceLabel: String = "",
     latencyMs: Long,
     onNavigateToAgents: () -> Unit,
     onNavigateToOptions: () -> Unit,
@@ -74,6 +76,9 @@ fun NiftyDashboardView(
     onOpenOhlcvTerminal: (() -> Unit)? = null
 ) {
     val palette = LocalChartPalette.current
+    val resolvedDataSourceLabel = dataSourceLabel.ifBlank {
+        stringResource(R.string.dashboard_cached_nse_ref)
+    }
     val isExchangeOpen = sessionStatus?.isExchangeOpen == true
     val isBullish = technicals.trendDirection == MarketBias.BULLISH
     val isBearish = technicals.trendDirection == MarketBias.BEARISH
@@ -109,13 +114,13 @@ fun NiftyDashboardView(
                         else -> palette.bearRed
                     }
                     val spotTitle = when {
-                        isExchangeOpen -> "NIFTY 50 LIVE"
-                        isStreaming -> "NIFTY 50 SIM"
-                        else -> "NIFTY 50"
+                        isExchangeOpen -> stringResource(R.string.dashboard_nifty_50_live)
+                        isStreaming -> stringResource(R.string.dashboard_nifty_50_sim)
+                        else -> stringResource(R.string.dashboard_nifty_50)
                     }
                     val badgeText = when {
-                        isStreaming && !isExchangeOpen -> "REPLAY"
-                        !isExchangeOpen -> "CLOSED"
+                        isStreaming && !isExchangeOpen -> stringResource(R.string.dashboard_badge_replay)
+                        !isExchangeOpen -> stringResource(R.string.dashboard_badge_closed)
                         else -> spot.gapType
                     }
 
@@ -215,7 +220,11 @@ fun NiftyDashboardView(
 
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = if (!isExchangeOpen && isStreaming) "Synthetic Replay Active" else dataSourceLabel,
+                        text = if (!isExchangeOpen && isStreaming) {
+                            stringResource(R.string.dashboard_synthetic_replay_active)
+                        } else {
+                            resolvedDataSourceLabel
+                        },
                         fontSize = 9.sp,
                         color = if (isLiveMarketData) palette.bullGreen else palette.textMuted,
                         fontFamily = FontFamily.Monospace,
@@ -234,8 +243,18 @@ fun NiftyDashboardView(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "L: ${spot.dayLow.toInt()}", fontSize = 9.sp, color = palette.textMuted, fontFamily = FontFamily.Monospace)
-                            Text(text = "H: ${spot.dayHigh.toInt()}", fontSize = 9.sp, color = palette.textMuted, fontFamily = FontFamily.Monospace)
+                            Text(
+                                text = stringResource(R.string.dashboard_day_low_format, spot.dayLow.toInt()),
+                                fontSize = 9.sp,
+                                color = palette.textMuted,
+                                fontFamily = FontFamily.Monospace
+                            )
+                            Text(
+                                text = stringResource(R.string.dashboard_day_high_format, spot.dayHigh.toInt()),
+                                fontSize = 9.sp,
+                                color = palette.textMuted,
+                                fontFamily = FontFamily.Monospace
+                            )
                         }
                         Spacer(modifier = Modifier.height(3.dp))
                         LinearProgressIndicator(
@@ -261,7 +280,7 @@ fun NiftyDashboardView(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(
-                        text = "INDIA VIX",
+                        text = stringResource(R.string.dashboard_india_vix),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.textSecondary,
@@ -291,11 +310,13 @@ fun NiftyDashboardView(
                     Spacer(modifier = Modifier.height(10.dp))
 
                     // Volatility Regime Badge
-                    val vixRegime = when {
-                        spot.indiaVix < 13.0 -> "Low / Breakout"
-                        spot.indiaVix > 18.0 -> "High / Spreads"
-                        else -> "Normal / Mom."
-                    }
+                    val vixRegime = stringResource(
+                        when {
+                            spot.indiaVix < 13.0 -> R.string.dashboard_vix_low
+                            spot.indiaVix > 18.0 -> R.string.dashboard_vix_high
+                            else -> R.string.dashboard_vix_normal
+                        }
+                    )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -360,7 +381,7 @@ fun NiftyDashboardView(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "CURRENT MARKET TREND SUMMARY",
+                            text = stringResource(R.string.dashboard_trend_summary_header),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary,
@@ -387,7 +408,11 @@ fun NiftyDashboardView(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Structure: ${spot.marketStructure} | ${technicals.momentumStrength}",
+                    text = stringResource(
+                        R.string.dashboard_structure_format,
+                        spot.marketStructure,
+                        technicals.momentumStrength
+                    ),
                     fontSize = 12.sp,
                     color = palette.textPrimary,
                     fontWeight = FontWeight.Medium
@@ -396,17 +421,44 @@ fun NiftyDashboardView(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Key Market Trend Pillars (Grid)
+                val vwapRel = stringResource(
+                    if (spot.spotPrice > technicals.vwap) R.string.dashboard_pillar_above else R.string.dashboard_pillar_below
+                )
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    PillarChip(label = "VWAP", value = "${technicals.vwap.toInt()} (${if (spot.spotPrice > technicals.vwap) "Above" else "Below"})", isPositive = spot.spotPrice > technicals.vwap)
-                    PillarChip(label = "RSI (14)", value = String.format(Locale.US, "%.1f", technicals.rsi14), isPositive = technicals.rsi14 > 50.0)
-                    PillarChip(label = "PCR (OI)", value = String.format(Locale.US, "%.2f", optionsChain.pcr), isPositive = optionsChain.pcr > 1.0)
-                    PillarChip(label = "Supertrend", value = if (technicals.supertrendBullish) "Bullish" else "Bearish", isPositive = technicals.supertrendBullish)
-                    PillarChip(label = "FII Long %", value = "${futures.fiiNetRatio.toInt()}%", isPositive = futures.fiiNetRatio > 50.0)
-                    PillarChip(label = "ATM Straddle", value = "₹${optionsChain.atmStraddlePremium.toInt()}", isPositive = true)
+                    PillarChip(
+                        label = stringResource(R.string.dashboard_pillar_vwap),
+                        value = stringResource(R.string.dashboard_pillar_vwap_val_format, technicals.vwap.toInt(), vwapRel),
+                        isPositive = spot.spotPrice > technicals.vwap
+                    )
+                    PillarChip(
+                        label = stringResource(R.string.dashboard_pillar_rsi_14),
+                        value = String.format(Locale.US, "%.1f", technicals.rsi14),
+                        isPositive = technicals.rsi14 > 50.0
+                    )
+                    PillarChip(
+                        label = stringResource(R.string.options_metric_pcr_oi),
+                        value = String.format(Locale.US, "%.2f", optionsChain.pcr),
+                        isPositive = optionsChain.pcr > 1.0
+                    )
+                    PillarChip(
+                        label = stringResource(R.string.dashboard_pillar_supertrend),
+                        value = stringResource(if (technicals.supertrendBullish) R.string.dashboard_bullish else R.string.dashboard_bearish),
+                        isPositive = technicals.supertrendBullish
+                    )
+                    PillarChip(
+                        label = stringResource(R.string.dashboard_pillar_fii_long),
+                        value = stringResource(R.string.agents_pct_format, futures.fiiNetRatio.toInt()),
+                        isPositive = futures.fiiNetRatio > 50.0
+                    )
+                    PillarChip(
+                        label = stringResource(R.string.dashboard_pillar_atm_straddle),
+                        value = stringResource(R.string.label_inr_amount_format, optionsChain.atmStraddlePremium.toInt().toString()),
+                        isPositive = true
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -422,8 +474,19 @@ fun NiftyDashboardView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text(text = "CALL WALL (RESISTANCE)", fontSize = 9.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
-                        Text(text = "${optionsChain.maxCallOiStrike.toInt()} CE", fontSize = 12.sp, color = palette.textPrimary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text(
+                            text = stringResource(R.string.dashboard_call_wall_res),
+                            fontSize = 9.sp,
+                            color = palette.bearRed,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = stringResource(R.string.report_ce_strike_format, optionsChain.maxCallOiStrike.toInt()),
+                            fontSize = 12.sp,
+                            color = palette.textPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
                     }
 
                     Box(
@@ -433,7 +496,7 @@ fun NiftyDashboardView(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "ATM: ${optionsChain.atmStrike.toInt()}",
+                            text = stringResource(R.string.dashboard_atm_format, optionsChain.atmStrike.toInt()),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.accentCyan,
@@ -442,8 +505,19 @@ fun NiftyDashboardView(
                     }
 
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "PUT WALL (SUPPORT)", fontSize = 9.sp, color = palette.bullGreen, fontWeight = FontWeight.Bold)
-                        Text(text = "${optionsChain.maxPutOiStrike.toInt()} PE", fontSize = 12.sp, color = palette.textPrimary, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                        Text(
+                            text = stringResource(R.string.dashboard_put_wall_supp),
+                            fontSize = 9.sp,
+                            color = palette.bullGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = stringResource(R.string.report_pe_strike_format, optionsChain.maxPutOiStrike.toInt()),
+                            fontSize = 12.sp,
+                            color = palette.textPrimary,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
                     }
                 }
             }

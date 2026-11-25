@@ -396,7 +396,8 @@ data class RiskPositionPlan(
     val recommendedNiftyLots: Int,
     val positionValueInr: Double,
     val rewardRiskRatio: Double,
-    val isLong: Boolean
+    val isLong: Boolean,
+    val lotSize: Int = 75
 )
 
 enum class BacktestStrategyId(val title: String, val summary: String) {

@@ -38,11 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.DeskState
 import com.example.data.MarketSessionStatus
 import com.example.model.FuturesData
@@ -160,7 +162,7 @@ fun HeaderTicker(
                         .padding(horizontal = 6.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = if (isLiveMarketData) "LIVE DATA" else "CACHED REF",
+                        text = stringResource(if (isLiveMarketData) R.string.badge_live_data else R.string.badge_cached_ref),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = if (isLiveMarketData) palette.bullGreen else palette.goldAccent,
@@ -194,7 +196,7 @@ fun HeaderTicker(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "NSE MCP",
+                                text = stringResource(R.string.badge_nse_mcp),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = palette.accentCyan,
@@ -214,7 +216,7 @@ fun HeaderTicker(
                         .padding(horizontal = 5.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "${latencyMs}ms",
+                        text = stringResource(R.string.latency_ms_format, latencyMs),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.bullGreen,
@@ -242,7 +244,7 @@ fun HeaderTicker(
                     } else {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh Live Market Data",
+                            contentDescription = stringResource(R.string.cd_refresh_live_data),
                             tint = palette.accentCyan,
                             modifier = Modifier.size(17.dp)
                         )
@@ -258,7 +260,7 @@ fun HeaderTicker(
                 ) {
                     Icon(
                         imageVector = if (isStreaming) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Toggle Live Simulation",
+                        contentDescription = stringResource(R.string.cd_toggle_live_sim),
                         tint = if (isStreaming) palette.accentCyan else palette.textMuted,
                         modifier = Modifier.size(18.dp)
                     )
@@ -287,13 +289,13 @@ fun HeaderTicker(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.SwapHoriz,
-                                contentDescription = "Change Scenario",
+                                contentDescription = stringResource(R.string.cd_change_scenario),
                                 tint = palette.goldAccent,
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Preset",
+                                text = stringResource(R.string.label_preset),
                                 fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = palette.textPrimary,
@@ -347,18 +349,16 @@ fun HeaderTicker(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Info,
-                        contentDescription = "Market Closed Notice",
+                        contentDescription = stringResource(R.string.cd_market_closed_notice),
                         tint = if (isStreaming) palette.accentCyan else palette.goldAccent,
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isStreaming) {
-                            "Off-hours Replay Simulator active. NIFTY 50 ticks are synthetic for strategy testing."
-                        } else if (isLiveMarketData) {
-                            "NSE is closed (Mon-Fri 09:15-15:30 IST). Showing latest official NIFTY 50 close. Tap ▶ to test Replay Simulator."
-                        } else {
-                            "NSE is closed (09:15-15:30 IST). Showing cached NSE close reference. Tap ↻ to retry live sync or ▶ for Replay."
+                        text = when {
+                            isStreaming -> stringResource(R.string.notice_replay_active)
+                            isLiveMarketData -> stringResource(R.string.notice_nse_closed_live)
+                            else -> stringResource(R.string.notice_nse_closed_cached)
                         },
                         fontSize = 10.sp,
                         color = if (isStreaming) palette.accentCyan else palette.goldAccent,
@@ -379,9 +379,9 @@ fun HeaderTicker(
         ) {
             Text(
                 text = when {
-                    isStreaming -> "Replay: $selectedScenario"
-                    lastSyncLabel.isNotBlank() -> "$selectedScenario • $lastSyncLabel"
-                    else -> "Mode: $selectedScenario"
+                    isStreaming -> stringResource(R.string.mode_replay_format, selectedScenario)
+                    lastSyncLabel.isNotBlank() -> stringResource(R.string.mode_sync_format, selectedScenario, lastSyncLabel)
+                    else -> stringResource(R.string.mode_default_format, selectedScenario)
                 },
                 fontSize = 9.5.sp,
                 color = if (isStreaming) palette.accentCyan else palette.textMuted,

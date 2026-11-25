@@ -24,11 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.niftychart.domain.model.SmaPeriod
 import com.example.ui.theme.LocalChartPalette
 import com.example.ui.theme.TabularNumericStyle
@@ -68,6 +70,7 @@ fun TechnicalIndicatorSelector(
                 val enabled = sma in enabledSmas
                 val dotColor = Color(sma.colorArgb)
                 val latest = latestSmaValues[sma]
+                val toggleLabel = stringResource(R.string.cd_toggle_indicator_format, sma.label)
                 Row(
                     modifier = Modifier
                         .minimumInteractiveComponentSize()
@@ -82,7 +85,7 @@ fun TechnicalIndicatorSelector(
                         )
                         .clickable { onToggleSma(sma) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .semantics { contentDescription = "Toggle ${sma.label} indicator" }
+                        .semantics { contentDescription = toggleLabel }
                         .testTag("indicator_chip_${sma.name}"),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -94,11 +97,13 @@ fun TechnicalIndicatorSelector(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (enabled && latest != null) {
-                            "${sma.label} (${String.format(Locale.US, "%.0f", latest)})"
-                        } else {
-                            sma.label
-                        },
+                        text = latest?.takeIf { enabled }?.let {
+                            stringResource(
+                                R.string.sma_with_value_format,
+                                sma.label,
+                                String.format(Locale.US, "%.0f", it)
+                            )
+                        } ?: sma.label,
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (enabled) palette.textPrimary else palette.textSecondary,
@@ -109,6 +114,7 @@ fun TechnicalIndicatorSelector(
 
             // RSI Toggle Chip
             val rsiColor = Color(0xFFC084FC)
+            val rsiToggleLabel = stringResource(R.string.cd_toggle_rsi_panel)
             Row(
                 modifier = Modifier
                     .minimumInteractiveComponentSize()
@@ -121,7 +127,7 @@ fun TechnicalIndicatorSelector(
                     )
                     .clickable { onToggleRsi() }
                     .padding(horizontal = 10.dp, vertical = 6.dp)
-                    .semantics { contentDescription = "Toggle RSI panel" }
+                    .semantics { contentDescription = rsiToggleLabel }
                     .testTag("indicator_chip_RSI"),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -133,11 +139,13 @@ fun TechnicalIndicatorSelector(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = if (rsiEnabled && latestRsi != null) {
-                        "RSI($rsiPeriod) ${String.format(Locale.US, "%.1f", latestRsi)}"
-                    } else {
-                        "RSI($rsiPeriod)"
-                    },
+                    text = latestRsi?.takeIf { rsiEnabled }?.let {
+                        stringResource(
+                            R.string.rsi_with_value_format,
+                            rsiPeriod,
+                            String.format(Locale.US, "%.1f", it)
+                        )
+                    } ?: stringResource(R.string.rsi_label_format, rsiPeriod),
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (rsiEnabled) palette.textPrimary else palette.textSecondary,
@@ -160,7 +168,7 @@ fun TechnicalIndicatorSelector(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "${periodOption}P",
+                            text = stringResource(R.string.rsi_period_pill_format, periodOption),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (active) Color.Black else palette.textSecondary,

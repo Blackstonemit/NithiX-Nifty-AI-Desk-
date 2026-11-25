@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.model.McpConnectionStatus
 import com.example.model.McpConnectorConfig
 import com.example.model.McpDiscoveredTool
@@ -133,7 +135,7 @@ fun McpConnectorInspectorDialog(
                     } else {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Reconnect and discover tools",
+                            contentDescription = stringResource(R.string.cd_reconnect_discover),
                             tint = palette.accentCyan
                         )
                     }
@@ -147,7 +149,7 @@ fun McpConnectorInspectorDialog(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close connector inspector",
+                        contentDescription = stringResource(R.string.cd_close_inspector),
                         tint = palette.textMuted
                     )
                 }
@@ -186,7 +188,11 @@ fun McpConnectorInspectorDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${connector.status.label.uppercase()} • ${connector.transportType.label}",
+                            text = stringResource(
+                                R.string.mcp_status_transport_format,
+                                connector.status.label.uppercase(),
+                                connector.transportType.label
+                            ),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = statusColor,
@@ -194,7 +200,7 @@ fun McpConnectorInspectorDialog(
                         )
                         if (connector.lastLatencyMs > 0L) {
                             Text(
-                                text = "${connector.lastLatencyMs}ms",
+                                text = stringResource(R.string.latency_ms_format, connector.lastLatencyMs),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = statusColor,
@@ -223,9 +229,9 @@ fun McpConnectorInspectorDialog(
 
             // Tabs
             val tabs = listOf(
-                "Tools (${connector.tools.size})",
-                "Schema & Info (${connector.resources.size + connector.prompts.size})",
-                "RPC Logs (${logs.size})"
+                stringResource(R.string.mcp_tab_tools_format, connector.tools.size),
+                stringResource(R.string.mcp_tab_schema_format, connector.resources.size + connector.prompts.size),
+                stringResource(R.string.mcp_tab_rpc_logs_format, logs.size)
             )
             Row(
                 modifier = Modifier
@@ -303,14 +309,14 @@ private fun ToolsPlaygroundSection(
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
-                    text = "No tools discovered yet",
+                    text = stringResource(R.string.mcp_no_tools_title),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Tap the Refresh icon above to execute an MCP initialize + tools/list handshake.",
+                    text = stringResource(R.string.mcp_no_tools_hint),
                     fontSize = 11.sp,
                     color = palette.textSecondary
                 )
@@ -320,7 +326,7 @@ private fun ToolsPlaygroundSection(
     }
 
     Text(
-        text = "DISCOVERED TOOLS (TAP TO TEST)",
+        text = stringResource(R.string.mcp_discovered_tools_header),
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         color = palette.textSecondary,
@@ -426,7 +432,7 @@ private fun ToolExecutionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "RUN TOOL: ${tool.name}",
+                    text = stringResource(R.string.mcp_run_tool_format, tool.name),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = palette.goldAccent,
@@ -443,7 +449,9 @@ private fun ToolExecutionCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (useRawJson) "Form Mode" else "Raw JSON",
+                            text = stringResource(
+                                if (useRawJson) R.string.mcp_mode_form else R.string.mcp_mode_raw_json
+                            ),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.accentCyan
@@ -460,7 +468,11 @@ private fun ToolExecutionCard(
                     OutlinedTextField(
                         value = paramValues[paramName] ?: "",
                         onValueChange = { paramValues[paramName] = it },
-                        label = { Text(if (isReq) "$paramName *" else paramName) },
+                        label = {
+                            Text(
+                                if (isReq) stringResource(R.string.mcp_required_param_format, paramName) else paramName
+                            )
+                        },
                         placeholder = { Text(paramHint, color = palette.textMuted, fontSize = 11.sp) },
                         singleLine = true,
                         colors = fieldColors,
@@ -474,7 +486,7 @@ private fun ToolExecutionCard(
                 OutlinedTextField(
                     value = rawJsonArgs,
                     onValueChange = { rawJsonArgs = it },
-                    label = { Text("Arguments JSON") },
+                    label = { Text(stringResource(R.string.mcp_args_json_label)) },
                     minLines = 2,
                     maxLines = 5,
                     colors = fieldColors,
@@ -517,7 +529,7 @@ private fun ToolExecutionCard(
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Executing tools/call...", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.mcp_executing_tool), fontWeight = FontWeight.Bold)
                 } else {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -525,7 +537,7 @@ private fun ToolExecutionCard(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Execute Tool", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.mcp_execute_tool), fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -550,7 +562,10 @@ private fun ToolExecutionCard(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = if (result.isSuccess) "RESULT (${result.latencyMs}ms)" else "ERROR (${result.latencyMs}ms)",
+                                text = stringResource(
+                                    if (result.isSuccess) R.string.mcp_result_latency_format else R.string.mcp_error_latency_format,
+                                    result.latencyMs
+                                ),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (result.isSuccess) palette.bullGreen else palette.bearRed,
@@ -576,7 +591,7 @@ private fun ResourcesAndPromptsSection(connector: McpConnectorConfig) {
     val palette = LocalChartPalette.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "RESOURCES (${connector.resources.size})",
+            text = stringResource(R.string.mcp_resources_header_format, connector.resources.size),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -584,7 +599,7 @@ private fun ResourcesAndPromptsSection(connector: McpConnectorConfig) {
         )
         if (connector.resources.isEmpty()) {
             Text(
-                text = "No resources advertised by this MCP server.",
+                text = stringResource(R.string.mcp_no_resources),
                 fontSize = 11.sp,
                 color = palette.textMuted
             )
@@ -606,7 +621,7 @@ private fun ResourcesAndPromptsSection(connector: McpConnectorConfig) {
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "PROMPTS (${connector.prompts.size})",
+            text = stringResource(R.string.mcp_prompts_header_format, connector.prompts.size),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -614,7 +629,7 @@ private fun ResourcesAndPromptsSection(connector: McpConnectorConfig) {
         )
         if (connector.prompts.isEmpty()) {
             Text(
-                text = "No prompt templates advertised by this MCP server.",
+                text = stringResource(R.string.mcp_no_prompts),
                 fontSize = 11.sp,
                 color = palette.textMuted
             )
@@ -640,7 +655,7 @@ private fun ConnectorRpcLogsSection(logs: List<McpRpcLog>) {
     val palette = LocalChartPalette.current
     if (logs.isEmpty()) {
         Text(
-            text = "No JSON-RPC 2.0 traffic recorded yet for this connector.",
+            text = stringResource(R.string.mcp_no_rpc_logs),
             fontSize = 11.sp,
             color = palette.textMuted
         )

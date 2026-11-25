@@ -62,11 +62,13 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.engine.TechnicalCalculator
 import com.example.engine.chart.TimeframeAggregationEngine
 import com.example.model.Candle
@@ -190,9 +192,9 @@ fun CandlestickChart(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    val symbolLabel = workstationState?.activeSymbol?.symbol ?: "NIFTY 50"
+                    val symbolLabel = workstationState?.activeSymbol?.symbol ?: stringResource(R.string.dashboard_nifty_50)
                     Text(
-                        text = "$symbolLabel CHART",
+                        text = stringResource(R.string.chart_title_format, symbolLabel),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.textPrimary,
@@ -218,7 +220,7 @@ fun CandlestickChart(
                                 .padding(horizontal = 5.dp, vertical = 3.dp)
                         ) {
                             Text(
-                                text = "${sig.rating} (${sig.score})",
+                                text = stringResource(R.string.chart_signal_rating_format, sig.rating, sig.score),
                                 fontSize = 8.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = sigColor,
@@ -239,7 +241,14 @@ fun CandlestickChart(
                                 .padding(horizontal = 6.dp, vertical = 3.dp)
                                 .testTag("open_ohlcv_terminal_button")
                         ) {
-                            Text("SMA/RSI", fontSize = 8.5.sp, fontWeight = FontWeight.ExtraBold, color = palette.accentCyan, maxLines = 1, softWrap = false)
+                            Text(
+                                stringResource(R.string.chart_pill_sma_rsi),
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = palette.accentCyan,
+                                maxLines = 1,
+                                softWrap = false
+                            )
                         }
                     }
 
@@ -254,9 +263,21 @@ fun CandlestickChart(
                                 .testTag("dashboard_ai_analyst_button")
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AutoAwesome, contentDescription = "AI Analyst", tint = palette.goldAccent, modifier = Modifier.size(11.dp))
+                                Icon(
+                                    Icons.Default.AutoAwesome,
+                                    contentDescription = stringResource(R.string.cd_ai_analyst),
+                                    tint = palette.goldAccent,
+                                    modifier = Modifier.size(11.dp)
+                                )
                                 Spacer(Modifier.width(3.dp))
-                                Text("AI", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = palette.goldAccent, maxLines = 1, softWrap = false)
+                                Text(
+                                    stringResource(R.string.chart_pill_ai),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = palette.goldAccent,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
                             }
                         }
                     }
@@ -271,9 +292,21 @@ fun CandlestickChart(
                                 .testTag("expand_workstation_button")
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.OpenInFull, contentDescription = "Expand Workstation", tint = Color.Black, modifier = Modifier.size(11.dp))
+                                Icon(
+                                    Icons.Default.OpenInFull,
+                                    contentDescription = stringResource(R.string.cd_expand_workstation),
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(11.dp)
+                                )
                                 Spacer(Modifier.width(3.dp))
-                                Text("WORKSTATION", fontSize = 8.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.Black, maxLines = 1, softWrap = false)
+                                Text(
+                                    stringResource(R.string.chart_pill_workstation),
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
                             }
                         }
                     } else {
@@ -285,7 +318,7 @@ fun CandlestickChart(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "COMPOSE CANVAS",
+                                text = stringResource(R.string.chart_pill_compose_canvas),
                                 fontSize = 9.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = palette.accentCyan,
@@ -377,18 +410,20 @@ fun CandlestickChart(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (isMultiDayTf) summaryTimeStr else "$summaryTimeStr IST",
+                            text = if (isMultiDayTf) summaryTimeStr else stringResource(R.string.label_ist_time_format, summaryTimeStr),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.goldAccent,
                             fontFamily = FontFamily.Monospace
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        val pricePrefix = when {
-                            isMarketOpen -> "LTP:"
-                            isStreaming -> "SIM:"
-                            else -> "CLOSE:"
-                        }
+                        val pricePrefix = stringResource(
+                            when {
+                                isMarketOpen -> R.string.chart_prefix_ltp
+                                isStreaming -> R.string.chart_prefix_sim
+                                else -> R.string.chart_prefix_close
+                            }
+                        )
                         Text(
                             text = "$pricePrefix ₹${String.format(Locale.US, "%,.2f", summaryCandle.close)}",
                             fontSize = 11.sp,
@@ -419,25 +454,40 @@ fun CandlestickChart(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(palette.bullGreen))
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text(text = "Bull", fontSize = 9.sp, color = palette.textSecondary)
+                    Text(text = stringResource(R.string.chart_legend_bull), fontSize = 9.sp, color = palette.textSecondary)
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(modifier = Modifier.size(7.dp).clip(CircleShape).background(palette.bearRed))
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text(text = "Bear", fontSize = 9.sp, color = palette.textSecondary)
+                    Text(text = stringResource(R.string.chart_legend_bear), fontSize = 9.sp, color = palette.textSecondary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(modifier = Modifier.width(8.dp).height(2.dp).background(palette.accentCyan))
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text(text = "VWAP ${vwapValue.toInt()}", fontSize = 9.sp, color = palette.accentCyan, fontFamily = FontFamily.Monospace)
+                    Text(
+                        text = stringResource(R.string.chart_legend_vwap_format, vwapValue.toInt()),
+                        fontSize = 9.sp,
+                        color = palette.accentCyan,
+                        fontFamily = FontFamily.Monospace
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(modifier = Modifier.width(8.dp).height(2.dp).background(palette.goldAccent))
                     Spacer(modifier = Modifier.width(3.dp))
-                    Text(text = "EMA20 ${emaValue.toInt()}", fontSize = 9.sp, color = palette.goldAccent, fontFamily = FontFamily.Monospace)
+                    Text(
+                        text = stringResource(R.string.chart_legend_ema20_format, emaValue.toInt()),
+                        fontSize = 9.sp,
+                        color = palette.goldAccent,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.TouchApp, contentDescription = null, tint = palette.textMuted, modifier = Modifier.size(11.dp))
                     Spacer(modifier = Modifier.width(2.dp))
-                    Text(text = "Drag for OHLC", fontSize = 9.sp, color = palette.textMuted, fontFamily = FontFamily.Monospace)
+                    Text(
+                        text = stringResource(R.string.chart_drag_for_ohlc),
+                        fontSize = 9.sp,
+                        color = palette.textMuted,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
             }
 
@@ -657,10 +707,20 @@ fun CandlestickChart(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.BarChart, contentDescription = null, tint = palette.goldAccent, modifier = Modifier.size(13.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "VOLUME", fontSize = 9.5.sp, fontWeight = FontWeight.Bold, color = palette.textSecondary, fontFamily = FontFamily.Monospace)
+                    Text(
+                        text = stringResource(R.string.chart_label_volume),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = palette.textSecondary,
+                        fontFamily = FontFamily.Monospace
+                    )
                 }
 
-                val volText = if (maxVol <= 0L) "Index Spot (0 Cash Vol)" else "Bar Vol: ${formatVolumeLabel(summaryCandle.volume)}"
+                val volText = if (maxVol <= 0L) {
+                    stringResource(R.string.chart_index_spot_no_vol)
+                } else {
+                    stringResource(R.string.chart_bar_vol_format, formatVolumeLabel(summaryCandle.volume))
+                }
                 Text(
                     text = volText,
                     fontSize = 9.5.sp,
@@ -774,7 +834,7 @@ private fun OhlcPopupOverlay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (isMultiDay) timeText else "$timeText IST",
+                text = if (isMultiDay) timeText else stringResource(R.string.label_ist_time_format, timeText),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.goldAccent,
@@ -786,16 +846,21 @@ private fun OhlcPopupOverlay(
                     .minimumInteractiveComponentSize()
                     .size(24.dp)
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Dismiss OHLC popup", tint = palette.textMuted, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.cd_dismiss_ohlc),
+                    tint = palette.textMuted,
+                    modifier = Modifier.size(14.dp)
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        OhlcValueRow(label = "Open", value = String.format(Locale.US, "%,.2f", candle.open), valueColor = palette.textPrimary)
-        OhlcValueRow(label = "High", value = String.format(Locale.US, "%,.2f", candle.high), valueColor = palette.bullGreen)
-        OhlcValueRow(label = "Low", value = String.format(Locale.US, "%,.2f", candle.low), valueColor = palette.bearRed)
-        OhlcValueRow(label = "Close", value = String.format(Locale.US, "%,.2f", candle.close), valueColor = accentColor)
+        OhlcValueRow(label = stringResource(R.string.label_open), value = String.format(Locale.US, "%,.2f", candle.open), valueColor = palette.textPrimary)
+        OhlcValueRow(label = stringResource(R.string.label_high), value = String.format(Locale.US, "%,.2f", candle.high), valueColor = palette.bullGreen)
+        OhlcValueRow(label = stringResource(R.string.label_low), value = String.format(Locale.US, "%,.2f", candle.low), valueColor = palette.bearRed)
+        OhlcValueRow(label = stringResource(R.string.label_close), value = String.format(Locale.US, "%,.2f", candle.close), valueColor = accentColor)
 
         Spacer(modifier = Modifier.height(3.dp))
 
@@ -815,7 +880,7 @@ private fun OhlcPopupOverlay(
                 fontFamily = FontFamily.Monospace
             )
             Text(
-                text = "Vol ${formatVolumeLabel(candle.volume)}",
+                text = stringResource(R.string.chart_vol_format, formatVolumeLabel(candle.volume)),
                 fontSize = 9.sp,
                 color = palette.textMuted,
                 fontFamily = FontFamily.Monospace

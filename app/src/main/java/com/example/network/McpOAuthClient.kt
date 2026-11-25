@@ -2,6 +2,7 @@ package com.example.network
 
 import android.net.Uri
 import android.util.Base64
+import androidx.core.net.toUri
 import com.example.model.McpOAuthMetadata
 import com.example.model.McpPendingOAuthFlow
 import kotlinx.coroutines.CoroutineScope
@@ -183,7 +184,7 @@ class McpOAuthClient(
                         val reader = BufferedReader(InputStreamReader(conn.getInputStream()))
                         val requestLine = reader.readLine().orEmpty()
                         val targetPath = requestLine.split(" ").getOrNull(1) ?: "/callback"
-                        val fullUri = Uri.parse("http://127.0.0.1:${socket.localPort}$targetPath")
+                        val fullUri = "http://127.0.0.1:${socket.localPort}$targetPath".toUri()
 
                         val html = """
                             <!doctype html>
@@ -325,7 +326,7 @@ class McpOAuthClient(
         }
 
         val extractedCode: String = if (raw.contains("://") || raw.contains("?")) {
-            val uri = Uri.parse(raw)
+            val uri = raw.toUri()
             val err = uri.getQueryParameter("error")
             if (!err.isNullOrBlank()) {
                 val desc = uri.getQueryParameter("error_description") ?: err

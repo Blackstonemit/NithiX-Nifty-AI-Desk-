@@ -172,10 +172,10 @@ class NiftyMarketRepositoryImpl(
             fromTimestampMs = latestStoredTs
         )
 
-        if (remoteResult.isSuccess) {
-            val fetched = remoteResult.getOrNull().orEmpty().filter { it.isValid() }
+        remoteResult.getOrNull()?.let { raw ->
+            val fetched = raw.filter { it.isValid() }
             val changedCount = writeMutex.withLock {
-                dao.upsertCandlesDeduplicated(fetched.map { NiftyOHLCVEntity.fromDomain(it) })
+                dao.upsertCandlesDeduplicated(fetched.map(NiftyOHLCVEntity::fromDomain))
             }
             val totalCount = dao.getCandleCount(symbol, interval.code)
             _connectionStatus.value = if (remoteProvider.isSimulated) {
@@ -199,11 +199,13 @@ class NiftyMarketRepositoryImpl(
         val existingCount = dao.getCandleCount(symbol, interval.code)
         if (existingCount == 0) {
             val fallbackProvider = (remoteProvider as? HybridNiftyMarketDataSource)?.fallbackDemoProvider() ?: demoProvider
-            val demoCandles = fallbackProvider.fetchHistoricalCandles(symbol, interval).getOrNull()
-                ?: SampleNiftyDataCatalog.generateSampleCandles(symbol, interval)
-            val seededCount = writeMutex.withLock {
-                dao.upsertCandlesDeduplicated(demoCandles.map { NiftyOHLCVEntity.fromDomain(it) })
-            }
+            val seededCount = (fallbackProvider.fetchHistoricalCandles(symbol, interval).getOrNull()
+                ?: SampleNiftyDataCatalog.generateSampleCandles(symbol, interval))
+                .let { demoCandles ->
+                    writeMutex.withLock {
+                        dao.upsertCandlesDeduplicated(demoCandles.map(NiftyOHLCVEntity::fromDomain))
+                    }
+                }
             val total = dao.getCandleCount(symbol, interval.code)
             _connectionStatus.value = FeedConnectionStatus.SIMULATED
             return@withContext Result.success(
@@ -233,10 +235,9 @@ class NiftyMarketRepositoryImpl(
 
     override suspend fun upsertCandles(candles: List<OHLCV>) {
         withContext(ioDispatcher) {
-            val valid = candles.filter { it.isValid() }
-            if (valid.isNotEmpty()) {
+            candles.filter { it.isValid() }.takeIf { it.isNotEmpty() }?.let { valid ->
                 writeMutex.withLock {
-                    dao.upsertCandlesDeduplicated(valid.map { NiftyOHLCVEntity.fromDomain(it) })
+                    dao.upsertCandlesDeduplicated(valid.map(NiftyOHLCVEntity::fromDomain))
                 }
             }
         }
@@ -249,21 +250,19 @@ class NiftyMarketRepositoryImpl(
         if (!tick.isValid()) return@withContext null
         val key = tick.symbol to interval
 
-        val outcome = writeMutex.withLock {
+        writeMutex.withLock {
             val existingLatest = activeCandles[key]
                 ?: dao.getLatestNCandles(tick.symbol, interval.code, 1).lastOrNull()?.toDomain()
 
-            val aggregated = aggregator.aggregate(existingLatest, tick, interval)
-            activeCandles[key] = aggregated.activeCandle
-
-            // Persist completed bucket on interval rollover AND checkpoint current forming candle
-            aggregated.completedCandle?.let { completed ->
-                dao.upsertCandleDeduplicated(NiftyOHLCVEntity.fromDomain(completed))
-            }
-            dao.upsertCandleDeduplicated(NiftyOHLCVEntity.fromDomain(aggregated.activeCandle))
-            aggregated.activeCandle
+            aggregator.aggregate(existingLatest, tick, interval).also { aggregated ->
+                activeCandles[key] = aggregated.activeCandle
+                // Persist completed bucket on interval rollover AND checkpoint current forming candle
+                aggregated.completedCandle?.let { completed ->
+                    dao.upsertCandleDeduplicated(NiftyOHLCVEntity.fromDomain(completed))
+                }
+                dao.upsertCandleDeduplicated(NiftyOHLCVEntity.fromDomain(aggregated.activeCandle))
+            }.activeCandle
         }
-        outcome
     }
 
     override fun streamRealTimeCandles(

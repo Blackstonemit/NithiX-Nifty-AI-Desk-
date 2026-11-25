@@ -204,11 +204,24 @@ class QaSideBySideCalculationTest {
         val riskAmount = 3000.0
         val expectedLotsAt75 = (riskAmount / (60.0 * indstocksClientDefaultLot)).toInt().coerceAtLeast(1) // 1 lot
         // At lotSize=25, floor(3000/(60*25)) = 2 lots vs floor(3000/(60*75)) = 1 lot
+        assertEquals(75, plan.lotSize)
         assertEquals(
-            "BUG-FUN-06: Offline risk lot sizing ($ {plan.recommendedNiftyLots} using hardcoded 25) mismatches NSE 75 lot size",
+            "BUG-FUN-06: Offline risk lot sizing (${plan.recommendedNiftyLots}) mismatches NSE 75 lot size",
             expectedLotsAt75,
             plan.recommendedNiftyLots
         )
+
+        val customLotPlan = SignalRiskAndBacktestEngine.calculateRiskPosition(
+            capital = 200_000.0,
+            riskPct = 1.5,
+            entryPrice = 25800.0,
+            customStopLoss = 25740.0,
+            atr14 = 40.0,
+            isLong = true,
+            lotSize = 15
+        )
+        assertEquals(15, customLotPlan.lotSize)
+        assertEquals(3, customLotPlan.recommendedNiftyLots)
     }
 
     @Test

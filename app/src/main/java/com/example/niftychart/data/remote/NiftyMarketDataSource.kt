@@ -35,37 +35,37 @@ object SampleNiftyDataCatalog {
         val alignedEnd = (anchorTimestampMs / stepMs) * stepMs
         val startMs = alignedEnd - (safeCount - 1) * stepMs
 
-        val out = ArrayList<OHLCV>(safeCount)
         var running = basePrice
-        for (i in 0 until safeCount) {
-            val ts = startMs + i * stepMs
-            val trend = i * 2.15
-            val primaryWave = sin(i / 6.5) * 48.0
-            val secondaryWave = cos(i / 3.2) * 19.0
-            val close = (basePrice + trend + primaryWave + secondaryWave).coerceAtLeast(100.0)
-            val open = running
-            val spread = 14.0 + (i % 7) * 4.5 + abs(close - open) * 0.35
-            val high = max(open, close) + spread * 0.6
-            val low = min(open, close) - spread * 0.5
-            val volume = 42_000L + (i % 13) * 8_400L + (abs(close - open) * 320).toLong()
+        return ArrayList<OHLCV>(safeCount).apply {
+            repeat(safeCount) { i ->
+                val ts = startMs + i * stepMs
+                val trend = i * 2.15
+                val primaryWave = sin(i / 6.5) * 48.0
+                val secondaryWave = cos(i / 3.2) * 19.0
+                val close = (basePrice + trend + primaryWave + secondaryWave).coerceAtLeast(100.0)
+                val open = running
+                val spread = 14.0 + (i % 7) * 4.5 + abs(close - open) * 0.35
+                val high = max(open, close) + spread * 0.6
+                val low = min(open, close) - spread * 0.5
+                val volume = 42_000L + (i % 13) * 8_400L + (abs(close - open) * 320).toLong()
 
-            out.add(
-                OHLCV(
-                    symbol = symbol,
-                    timestamp = ts,
-                    interval = interval,
-                    open = open,
-                    high = high,
-                    low = low,
-                    close = close,
-                    volume = volume,
-                    createdAt = ts,
-                    updatedAt = ts
+                add(
+                    OHLCV(
+                        symbol = symbol,
+                        timestamp = ts,
+                        interval = interval,
+                        open = open,
+                        high = high,
+                        low = low,
+                        close = close,
+                        volume = volume,
+                        createdAt = ts,
+                        updatedAt = ts
+                    )
                 )
-            )
-            running = close
+                running = close
+            }
         }
-        return out
     }
 }
 

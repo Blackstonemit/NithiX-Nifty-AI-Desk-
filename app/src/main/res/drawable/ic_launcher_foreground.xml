@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/ic_launcher_nifty_1793985544560"
+        android:drawable="@drawable/launcher_foreground_nifty_art"
         android:gravity="center" />
 </layer-list>

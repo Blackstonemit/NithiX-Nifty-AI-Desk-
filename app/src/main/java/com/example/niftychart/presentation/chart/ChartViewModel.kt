@@ -153,25 +153,27 @@ class ChartViewModel(
     }
 
     fun selectSymbol(symbol: String) {
-        val clean = symbol.trim().ifBlank { OHLCV.SYMBOL_NIFTY_50 }
-        val current = _uiState.value
-        if (current.symbol == clean) return
-
-        _uiState.update {
-            it.copy(
-                symbol = clean,
-                isLoading = true,
-                errorMessage = null,
-                scrollRightOffset = 0,
-                selectedCandleIndex = null,
-                isCrosshairLocked = false
-            )
-        }
-        activeKey.value = clean to current.selectedInterval
-        syncActiveInterval(forceRefresh = false)
-        if (_uiState.value.isStreamingActive) {
-            restartLiveStream(clean, current.selectedInterval)
-        }
+        symbol.trim()
+            .ifBlank { OHLCV.SYMBOL_NIFTY_50 }
+            .takeIf { it != _uiState.value.symbol }
+            ?.let { clean ->
+                val current = _uiState.value
+                _uiState.update {
+                    it.copy(
+                        symbol = clean,
+                        isLoading = true,
+                        errorMessage = null,
+                        scrollRightOffset = 0,
+                        selectedCandleIndex = null,
+                        isCrosshairLocked = false
+                    )
+                }
+                activeKey.value = clean to current.selectedInterval
+                syncActiveInterval(forceRefresh = false)
+                if (_uiState.value.isStreamingActive) {
+                    restartLiveStream(clean, current.selectedInterval)
+                }
+            }
     }
 
     fun syncActiveInterval(forceRefresh: Boolean = true) {
@@ -226,10 +228,8 @@ class ChartViewModel(
         streamJob?.cancel()
         streamJob = viewModelScope.launch {
             repository.streamRealTimeCandles(symbol, interval).collectLatest { updatedCandle ->
-                if (updatedCandle != null) {
-                    _uiState.update {
-                        it.copy(syncStatusLabel = "Streaming ${interval.code} ticks")
-                    }
+                updatedCandle?.let {
+                    _uiState.update { it.copy(syncStatusLabel = "Streaming ${interval.code} ticks") }
                 }
             }
         }
@@ -249,10 +249,12 @@ class ChartViewModel(
     }
 
     fun setRsiPeriod(period: Int) {
-        val safe = period.coerceIn(2, 50)
-        if (_uiState.value.rsiPeriod == safe) return
-        _uiState.update { it.copy(rsiPeriod = safe) }
-        recomputeIndicators(_uiState.value.candles)
+        period.coerceIn(2, 50)
+            .takeIf { it != _uiState.value.rsiPeriod }
+            ?.let { safe ->
+                _uiState.update { it.copy(rsiPeriod = safe) }
+                recomputeIndicators(_uiState.value.candles)
+            }
     }
 
     fun toggleTheme() {

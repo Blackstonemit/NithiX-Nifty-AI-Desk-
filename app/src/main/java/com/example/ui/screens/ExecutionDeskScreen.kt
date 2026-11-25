@@ -46,12 +46,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.DeskState
 import com.example.engine.agents.OptionsExecutionAgent
 import com.example.model.AlertAction
@@ -95,6 +99,7 @@ fun ExecutionDeskScreen(
     ) -> Unit = { _, _, _, _, _, _, _ -> }
 ) {
     val palette = LocalChartPalette.current
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
     var showLiveRiskDialog by remember { mutableStateOf(false) }
 
@@ -103,12 +108,15 @@ fun ExecutionDeskScreen(
         val generatedAlerts = mutableListOf<LiveTradeAlert>()
 
         state.activeOrders.forEach { order ->
-            val mapped = order.toPositionLifecycle(state)
+            val mapped = order.toPositionLifecycle(state, context)
             if (order.status == "CLOSED") {
                 evaluatedPositions.add(
                     mapped.copy(
                         status = ExecutionAction.FULL_EXIT,
-                        exitReason = "Position closed by trader. Net P&L: ₹${String.format(Locale.US, "%,.0f", order.netPnl)}."
+                        exitReason = context.getString(
+                            R.string.execution_closed_reason_format,
+                            String.format(Locale.US, "%,.0f", order.netPnl)
+                        )
                     )
                 )
             } else {
@@ -153,7 +161,7 @@ fun ExecutionDeskScreen(
             Icon(Icons.Default.ElectricBolt, contentDescription = null, tint = palette.goldAccent, modifier = Modifier.size(20.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "OPTIONS EXECUTION & POSITION DESK",
+                text = stringResource(R.string.execution_screen_title),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = palette.textPrimary,
@@ -163,7 +171,7 @@ fun ExecutionDeskScreen(
         }
 
         Text(
-            text = "Live trade lifecycle monitor synchronized with authorized F&O orders & trailing risk exits.",
+            text = stringResource(R.string.execution_screen_subtitle),
             fontSize = 11.sp,
             color = palette.textSecondary
         )
@@ -195,9 +203,9 @@ fun ExecutionDeskScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = "DESK CAPITAL", fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.execution_desk_capital), fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
                 Text(
-                    text = "₹${String.format(Locale.US, "%,.0f", state.availableCapital)}",
+                    text = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", state.availableCapital)),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary,
@@ -205,7 +213,7 @@ fun ExecutionDeskScreen(
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "UNREALIZED P&L", fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.execution_unrealized_pnl), fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
                 Text(
                     text = "${if (openUnrealizedPnl >= 0) "+" else ""}₹${String.format(Locale.US, "%,.0f", openUnrealizedPnl)}",
                     fontSize = 13.sp,
@@ -215,7 +223,7 @@ fun ExecutionDeskScreen(
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "REALIZED P&L", fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(R.string.execution_realized_pnl), fontSize = 9.sp, color = palette.textMuted, fontWeight = FontWeight.Bold)
                 Text(
                     text = "${if (state.totalRealizedPnl >= 0) "+" else ""}₹${String.format(Locale.US, "%,.0f", state.totalRealizedPnl)}",
                     fontSize = 13.sp,
@@ -246,7 +254,7 @@ fun ExecutionDeskScreen(
                         Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = palette.goldAccent, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "LIVE TRADE MONITORING ALERTS",
+                            text = stringResource(R.string.execution_alerts_title),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary,
@@ -259,7 +267,7 @@ fun ExecutionDeskScreen(
                             .background(palette.goldAccentDim)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(text = "${alerts.size} ACTIVE ALERTS", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent)
+                        Text(text = stringResource(R.string.execution_active_alerts_format, alerts.size), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent)
                     }
                 }
 
@@ -267,11 +275,10 @@ fun ExecutionDeskScreen(
 
                 if (alerts.isEmpty()) {
                     Text(
-                        text = if (positions.isEmpty()) {
-                            "No active positions yet. Authorize a signal on Terminal to track real-time lifecycle alerts."
-                        } else {
-                            "All active orders are within standard SL / Target parameters."
-                        },
+                        text = stringResource(
+                            if (positions.isEmpty()) R.string.execution_no_active_positions
+                            else R.string.execution_within_sl_params
+                        ),
                         fontSize = 11.sp,
                         color = palette.textMuted
                     )
@@ -301,14 +308,14 @@ fun ExecutionDeskScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "POSITION LIFECYCLE (${positions.size})",
+                        text = stringResource(R.string.execution_lifecycle_title_format, positions.size),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = palette.accentCyan,
                         fontFamily = FontFamily.Monospace
                     )
                     Text(
-                        text = "1-SL → 2-Inval → 3-Rev → 4-Target → 5-Trail",
+                        text = stringResource(R.string.execution_lifecycle_rules),
                         fontSize = 9.sp,
                         color = palette.textMuted
                     )
@@ -326,7 +333,7 @@ fun ExecutionDeskScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No authorized trades in execution book. Tap AUTHORIZE ORDER from Terminal when conviction >= 60.",
+                            text = stringResource(R.string.execution_empty_book),
                             fontSize = 11.sp,
                             color = palette.textSecondary
                         )
@@ -359,13 +366,13 @@ fun ExecutionDeskScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.TableChart, contentDescription = null, tint = palette.accentCyan, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "TRADE EXECUTION REPORT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
+                    Text(text = stringResource(R.string.execution_report_title), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
                 if (executionReport.isEmpty()) {
-                    Text(text = "No execution records available.", fontSize = 11.sp, color = palette.textMuted)
+                    Text(text = stringResource(R.string.execution_no_records), fontSize = 11.sp, color = palette.textMuted)
                 } else {
                     executionReport.forEach { row ->
                         ExecutionReportItem(row = row)
@@ -389,7 +396,7 @@ fun ExecutionDeskScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Shield, contentDescription = null, tint = palette.bearRed, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "OPTIONS & FUTURES RISK MANAGEMENT", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
+                    Text(text = stringResource(R.string.execution_risk_title), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bearRed)
                 }
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -398,10 +405,11 @@ fun ExecutionDeskScreen(
                     indstocksState.activeContractLotSize
                 } else 75
                 Text(
-                    text = "• Margin Rule: Strict defined-risk sizing per NIFTY lot ($effectiveLot Qty).\n" +
-                        "• Gamma Exposure: Automatic review if ATM straddle expands > 15%.\n" +
-                        "• Hard Prohibition: Never average losing positions without validated hedge.\n" +
-                        "• Max Acceptable Portfolio Loss: Capped at 1.5% (₹${String.format(Locale.US, "%,.0f", state.availableCapital * 0.015)}) of desk capital.",
+                    text = stringResource(
+                        R.string.execution_risk_body_format,
+                        effectiveLot,
+                        String.format(Locale.US, "%,.0f", state.availableCapital * 0.015)
+                    ),
                     fontSize = 11.sp,
                     color = palette.textSecondary,
                     lineHeight = 16.sp
@@ -438,14 +446,12 @@ fun ExecutionDeskScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Warning, contentDescription = null, tint = palette.bearRed, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Enable Live INDstocks Orders?", color = palette.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.execution_live_dialog_title), color = palette.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Text(
-                    text = "Live + Smart GTT mode transmits real-money F&O orders to INDstocks REST API (/order and /smart/order).\n\n" +
-                        "Note: Per NSE compliance rules, INDstocks live order placement requires your public static IP to be whitelisted in the INDstocks dashboard. " +
-                        "You will still review every trade in the confirmation dialog before submission.",
+                    text = stringResource(R.string.execution_live_dialog_body),
                     fontSize = 12.sp,
                     color = palette.textSecondary,
                     lineHeight = 17.sp
@@ -460,12 +466,12 @@ fun ExecutionDeskScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = palette.goldAccent, contentColor = Color.Black),
                     modifier = Modifier.testTag("confirm_live_risk_button")
                 ) {
-                    Text("I Understand — Unlock Live", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.execution_live_dialog_confirm), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLiveRiskDialog = false }) {
-                    Text("Stay in Paper Sim", color = palette.textSecondary)
+                    Text(stringResource(R.string.execution_live_dialog_dismiss), color = palette.textSecondary)
                 }
             }
         )
@@ -493,7 +499,7 @@ private fun ExecutionSafetyModeCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "EXECUTION SAFETY MODE",
+                text = stringResource(R.string.execution_safety_mode_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -598,7 +604,7 @@ private fun IndstocksPortfolioAndBooksCard(
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
                         Text(
-                            text = "INDSTOCKS PORTFOLIO & BOOKS",
+                            text = stringResource(R.string.execution_broker_card_title),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = palette.textPrimary,
@@ -608,13 +614,13 @@ private fun IndstocksPortfolioAndBooksCard(
                             val wsPriceColor = if (indstocksState.wsPriceStatus == IndstocksWebSocketStatus.STREAMING) palette.bullGreen else palette.textMuted
                             val wsOrdColor = if (indstocksState.wsOrderStatus == IndstocksWebSocketStatus.STREAMING) palette.bullGreen else palette.textMuted
                             Text(
-                                text = "Price: ${indstocksState.wsPriceStatus.label}",
+                                text = stringResource(R.string.execution_ws_price_format, indstocksState.wsPriceStatus.label),
                                 fontSize = 9.sp,
                                 color = wsPriceColor,
                                 fontFamily = FontFamily.Monospace
                             )
                             Text(
-                                text = "• Orders: ${indstocksState.wsOrderStatus.label}",
+                                text = stringResource(R.string.execution_ws_orders_format, indstocksState.wsOrderStatus.label),
                                 fontSize = 9.sp,
                                 color = wsOrdColor,
                                 fontFamily = FontFamily.Monospace
@@ -628,9 +634,9 @@ private fun IndstocksPortfolioAndBooksCard(
                     modifier = Modifier.minimumInteractiveComponentSize(),
                     shape = RoundedCornerShape(6.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Sync INDstocks", tint = palette.accentCyan, modifier = Modifier.size(13.dp))
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.cd_sync_indstocks), tint = palette.accentCyan, modifier = Modifier.size(13.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Sync", fontSize = 10.sp, color = palette.accentCyan)
+                    Text(stringResource(R.string.action_sync), fontSize = 10.sp, color = palette.accentCyan)
                 }
             }
 
@@ -644,9 +650,17 @@ private fun IndstocksPortfolioAndBooksCard(
                         .border(1.dp, palette.accentCyan.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
                         .padding(horizontal = 8.dp, vertical = 5.dp)
                 ) {
+                    val execPriceSuffix = evt.executedPrice?.let {
+                        stringResource(R.string.execution_ws_exec_price_format, String.format(Locale.US, "%.2f", it))
+                    } ?: ""
                     Text(
-                        text = "WS #${evt.orderId} (${evt.entityName.ifBlank { evt.orderType }}): ${evt.statusLabel}" +
-                            (evt.executedPrice?.let { " @ ₹${String.format(Locale.US, "%.2f", it)}" } ?: ""),
+                        text = stringResource(
+                            R.string.execution_ws_order_event_format,
+                            evt.orderId,
+                            evt.entityName.ifBlank { evt.orderType },
+                            evt.statusLabel,
+                            execPriceSuffix
+                        ),
                         fontSize = 9.5.sp,
                         color = palette.accentCyan,
                         fontFamily = FontFamily.Monospace,
@@ -667,24 +681,29 @@ private fun IndstocksPortfolioAndBooksCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("AVAIL MARGIN", fontSize = 8.5.sp, color = palette.textMuted)
-                        Text("₹${String.format(Locale.US, "%,.0f", funds.availableMargin)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen, fontFamily = FontFamily.Monospace)
+                        Text(stringResource(R.string.execution_avail_margin), fontSize = 8.5.sp, color = palette.textMuted)
+                        Text(stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", funds.availableMargin)), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.bullGreen, fontFamily = FontFamily.Monospace)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("USED", fontSize = 8.5.sp, color = palette.textMuted)
-                        Text("₹${String.format(Locale.US, "%,.0f", funds.usedMargin)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, fontFamily = FontFamily.Monospace)
+                        Text(stringResource(R.string.execution_used_margin), fontSize = 8.5.sp, color = palette.textMuted)
+                        Text(stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", funds.usedMargin)), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.goldAccent, fontFamily = FontFamily.Monospace)
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("COLLATERAL", fontSize = 8.5.sp, color = palette.textMuted)
-                        Text("₹${String.format(Locale.US, "%,.0f", funds.collateral)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary, fontFamily = FontFamily.Monospace)
+                        Text(stringResource(R.string.execution_collateral), fontSize = 8.5.sp, color = palette.textMuted)
+                        Text(stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.0f", funds.collateral)), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary, fontFamily = FontFamily.Monospace)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Positions (${indstocksState.positions.size}) • Holdings (${indstocksState.holdings.size}) • " +
-                    "Orders (${indstocksState.orderBook.size}) • Trades (${indstocksState.tradeBook.size})",
+                text = stringResource(
+                    R.string.execution_books_summary_format,
+                    indstocksState.positions.size,
+                    indstocksState.holdings.size,
+                    indstocksState.orderBook.size,
+                    indstocksState.tradeBook.size
+                ),
                 fontSize = 10.sp,
                 color = palette.textSecondary,
                 fontFamily = FontFamily.Monospace
@@ -702,7 +721,16 @@ private fun IndstocksPortfolioAndBooksCard(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(pos.symbol, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary, fontFamily = FontFamily.Monospace)
-                        Text("Qty: ${pos.netQty} • ${pos.product} • LTP ₹${String.format(Locale.US, "%.1f", pos.lastPrice)}", fontSize = 9.5.sp, color = palette.textMuted)
+                        Text(
+                            text = stringResource(
+                                R.string.execution_pos_details_format,
+                                pos.netQty,
+                                pos.product,
+                                String.format(Locale.US, "%.1f", pos.lastPrice)
+                            ),
+                            fontSize = 9.5.sp,
+                            color = palette.textMuted
+                        )
                     }
                     Text(
                         text = "${if (pos.mtm >= 0) "+" else ""}₹${String.format(Locale.US, "%,.0f", pos.mtm)}",
@@ -725,8 +753,23 @@ private fun IndstocksPortfolioAndBooksCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("${holding.symbol} (${holding.exchange})", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary, fontFamily = FontFamily.Monospace)
-                        Text("Qty: ${holding.quantity} • Avg ₹${String.format(Locale.US, "%.1f", holding.avgPrice)} • LTP ₹${String.format(Locale.US, "%.1f", holding.lastPrice)}", fontSize = 9.5.sp, color = palette.textMuted)
+                        Text(
+                            text = stringResource(R.string.execution_holding_symbol_format, holding.symbol, holding.exchange),
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = palette.textPrimary,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.execution_holding_details_format,
+                                holding.quantity,
+                                String.format(Locale.US, "%.1f", holding.avgPrice),
+                                String.format(Locale.US, "%.1f", holding.lastPrice)
+                            ),
+                            fontSize = 9.5.sp,
+                            color = palette.textMuted
+                        )
                     }
                     Text(
                         text = "${if (holding.pnl >= 0) "+" else ""}₹${String.format(Locale.US, "%,.0f", holding.pnl)}",
@@ -751,14 +794,19 @@ private fun IndstocksPortfolioAndBooksCard(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "${ord.txnType} ${ord.symbol} (${ord.status})",
+                            text = stringResource(R.string.execution_order_title_format, ord.txnType, ord.symbol, ord.status),
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (ord.isSmartOrder) palette.goldAccent else palette.accentCyan,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "#${ord.orderId} • Qty ${ord.quantity} @ ₹${String.format(Locale.US, "%.1f", ord.price)}",
+                            text = stringResource(
+                                R.string.execution_order_sub_format,
+                                ord.orderId,
+                                ord.quantity,
+                                String.format(Locale.US, "%.1f", ord.price)
+                            ),
                             fontSize = 9.5.sp,
                             color = palette.textMuted
                         )
@@ -776,7 +824,7 @@ private fun IndstocksPortfolioAndBooksCard(
                                     .minimumInteractiveComponentSize()
                                     .testTag("modify_broker_order_${ord.orderId}")
                             ) {
-                                Text("Modify", fontSize = 10.sp, color = palette.accentCyan, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.action_modify), fontSize = 10.sp, color = palette.accentCyan, fontWeight = FontWeight.Bold)
                             }
                             TextButton(
                                 onClick = { onCancelOrder(ord.orderId, ord.segment, ord.isSmartOrder) },
@@ -784,7 +832,7 @@ private fun IndstocksPortfolioAndBooksCard(
                                     .minimumInteractiveComponentSize()
                                     .testTag("cancel_broker_order_${ord.orderId}")
                             ) {
-                                Text("Cancel", fontSize = 10.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.action_cancel), fontSize = 10.sp, color = palette.bearRed, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -817,7 +865,10 @@ private fun IndstocksPortfolioAndBooksCard(
             containerColor = palette.surface,
             title = {
                 Text(
-                    text = if (ord.isSmartOrder) "Modify Smart GTT #${ord.orderId}" else "Modify Order #${ord.orderId}",
+                    text = stringResource(
+                        if (ord.isSmartOrder) R.string.execution_modify_smart_gtt_format else R.string.execution_modify_order_format,
+                        ord.orderId
+                    ),
                     color = palette.textPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
@@ -830,7 +881,7 @@ private fun IndstocksPortfolioAndBooksCard(
                     OutlinedTextField(
                         value = qtyInput,
                         onValueChange = { if (it.all { ch -> ch.isDigit() }) qtyInput = it },
-                        label = { Text("Quantity") },
+                        label = { Text(stringResource(R.string.execution_label_quantity)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = fieldColors,
@@ -839,7 +890,7 @@ private fun IndstocksPortfolioAndBooksCard(
                     OutlinedTextField(
                         value = priceInput,
                         onValueChange = { priceInput = it },
-                        label = { Text("Limit Price (₹)") },
+                        label = { Text(stringResource(R.string.execution_label_limit_price)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         colors = fieldColors,
@@ -849,7 +900,7 @@ private fun IndstocksPortfolioAndBooksCard(
                         OutlinedTextField(
                             value = slInput,
                             onValueChange = { slInput = it },
-                            label = { Text("SL Trigger Price (₹)") },
+                            label = { Text(stringResource(R.string.execution_label_sl_trigger)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             colors = fieldColors,
@@ -858,7 +909,7 @@ private fun IndstocksPortfolioAndBooksCard(
                         OutlinedTextField(
                             value = tgtInput,
                             onValueChange = { tgtInput = it },
-                            label = { Text("Target Trigger Price (₹)") },
+                            label = { Text(stringResource(R.string.execution_label_target_trigger)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             colors = fieldColors,
@@ -880,19 +931,19 @@ private fun IndstocksPortfolioAndBooksCard(
                     colors = ButtonDefaults.buttonColors(containerColor = palette.accentCyan, contentColor = Color.Black),
                     modifier = Modifier.testTag("confirm_modify_order_button")
                 ) {
-                    Text("Submit Modify", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.execution_submit_modify), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { orderToModify = null }) {
-                    Text("Cancel", color = palette.textSecondary)
+                    Text(stringResource(R.string.action_cancel), color = palette.textSecondary)
                 }
             }
         )
     }
 }
 
-private fun ExecutedOrder.toPositionLifecycle(state: DeskState): PositionLifecycle {
+private fun ExecutedOrder.toPositionLifecycle(state: DeskState, context: Context): PositionLifecycle {
     val strategy = when (signal) {
         SignalType.BUY_PE, SignalType.BEARISH_FUTURES -> OptionsStrategyType.BUY_PE
         else -> OptionsStrategyType.BUY_CE
@@ -922,8 +973,8 @@ private fun ExecutedOrder.toPositionLifecycle(state: DeskState): PositionLifecyc
         returnPct = if (entryPrice > 0.0 && quantity > 0) (netPnl / (entryPrice * quantity)) * 100.0 else 0.0,
         status = ExecutionAction.HOLD,
         marginRequired = entryPrice * quantity,
-        gammaExposure = "Live Strike ${parsedStrike.roundToInt()} Tracking",
-        exitReason = "Status: $status",
+        gammaExposure = context.getString(R.string.execution_gamma_strike_format, parsedStrike.roundToInt()),
+        exitReason = context.getString(R.string.execution_status_reason_format, status),
         openTimestamp = timestamp
     )
 }
@@ -969,7 +1020,7 @@ private fun AlertItemView(alert: LiveTradeAlert) {
                 }
 
                 Text(
-                    text = "P${alert.priorityLevel} Trigger",
+                    text = stringResource(R.string.execution_alert_priority_format, alert.priorityLevel),
                     fontSize = 9.sp,
                     color = palette.textMuted,
                     fontWeight = FontWeight.Bold
@@ -982,13 +1033,18 @@ private fun AlertItemView(alert: LiveTradeAlert) {
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = "Entry: ₹${alert.entryPremium.toInt()} | LTP: ₹${alert.currentPremium.toInt()}",
+                    text = stringResource(R.string.execution_alert_entry_ltp_format, alert.entryPremium.toInt(), alert.currentPremium.toInt()),
                     fontSize = 10.sp,
                     color = palette.textMuted,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
-                    text = "P&L: ${if (alert.unrealizedPnlInr >= 0) "+" else ""}₹${alert.unrealizedPnlInr.toInt()} (${alert.pnlPct.toInt()}%)",
+                    text = stringResource(
+                        R.string.execution_alert_pnl_format,
+                        if (alert.unrealizedPnlInr >= 0) "+" else "",
+                        alert.unrealizedPnlInr.toInt(),
+                        alert.pnlPct.toInt()
+                    ),
                     fontSize = 10.sp,
                     color = if (alert.unrealizedPnlInr >= 0) palette.bullGreen else palette.bearRed,
                     fontWeight = FontWeight.Bold,
@@ -1046,7 +1102,7 @@ private fun PositionLifecycleItem(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Close Position",
+                                contentDescription = stringResource(R.string.cd_close_position),
                                 tint = palette.textMuted,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -1057,7 +1113,11 @@ private fun PositionLifecycleItem(
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (isClosed) "CLOSED | ${pos.exitReason}" else "Action: ${pos.status.label} | ${pos.exitReason}",
+                text = if (isClosed) {
+                    stringResource(R.string.execution_pos_closed_format, pos.exitReason)
+                } else {
+                    stringResource(R.string.execution_pos_action_format, pos.status.label, pos.exitReason)
+                },
                 fontSize = 11.sp,
                 color = if (isClosed) palette.textMuted else palette.goldAccent
             )
@@ -1065,13 +1125,13 @@ private fun PositionLifecycleItem(
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = "SL: ₹${pos.initialStopLoss.toInt()} | Trail: ₹${pos.trailingStopLoss.toInt()}",
+                    text = stringResource(R.string.execution_pos_sl_trail_format, pos.initialStopLoss.toInt(), pos.trailingStopLoss.toInt()),
                     fontSize = 10.sp,
                     color = palette.textSecondary,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
-                    text = "T1: ₹${pos.target1.toInt()} | T2: ₹${pos.target2.toInt()}",
+                    text = stringResource(R.string.execution_pos_targets_format, pos.target1.toInt(), pos.target2.toInt()),
                     fontSize = 10.sp,
                     color = palette.bullGreen,
                     fontFamily = FontFamily.Monospace
@@ -1084,7 +1144,7 @@ private fun PositionLifecycleItem(
 @Composable
 private fun ExecutionReportItem(row: Map<String, String>) {
     val palette = LocalChartPalette.current
-    val pnlStr = row["P&L"] ?: "₹0"
+    val pnlStr = row["P&L"] ?: stringResource(R.string.label_inr_amount_format, "0")
     val isLoss = pnlStr.startsWith("-")
     Box(
         modifier = Modifier
@@ -1095,12 +1155,30 @@ private fun ExecutionReportItem(row: Map<String, String>) {
     ) {
         Column {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "${row["Strategy"]} (Strike ${row["Strike"]})", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.accentCyan)
+                Text(
+                    text = stringResource(R.string.execution_report_strat_strike_format, row["Strategy"] ?: "", row["Strike"] ?: ""),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = palette.accentCyan
+                )
                 Text(text = pnlStr, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (isLoss) palette.bearRed else palette.bullGreen, fontFamily = FontFamily.Monospace)
             }
             Spacer(modifier = Modifier.height(2.dp))
-            Text(text = "Entry: ${row["Entry Premium"]} | Current: ${row["Current Premium"]} | Action: ${row["Exit Action"]}", fontSize = 10.sp, color = palette.textSecondary)
-            Text(text = "Trigger: ${row["Exit Reason"]}", fontSize = 9.sp, color = palette.textMuted)
+            Text(
+                text = stringResource(
+                    R.string.execution_report_row_format,
+                    row["Entry Premium"] ?: "",
+                    row["Current Premium"] ?: "",
+                    row["Exit Action"] ?: ""
+                ),
+                fontSize = 10.sp,
+                color = palette.textSecondary
+            )
+            Text(
+                text = stringResource(R.string.execution_report_trigger_format, row["Exit Reason"] ?: ""),
+                fontSize = 9.sp,
+                color = palette.textMuted
+            )
         }
     }
 }

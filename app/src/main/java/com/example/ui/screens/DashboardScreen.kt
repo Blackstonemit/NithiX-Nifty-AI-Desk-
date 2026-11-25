@@ -31,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.ui.components.HeaderTicker
 import com.example.ui.components.NiftyDashboardView
 import com.example.ui.components.SignalCard
@@ -254,14 +256,14 @@ private fun ExecutionDeskShortcutCard(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    text = "EXECUTION DESK ($activeOrderCount ACTIVE)",
+                    text = stringResource(R.string.execution_desk_active_count, activeOrderCount),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.textPrimary,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
-                    text = "Manage stop-loss, targets & position lifecycle",
+                    text = stringResource(R.string.execution_desk_subtitle),
                     fontSize = 9.5.sp,
                     color = palette.textSecondary
                 )
@@ -269,7 +271,7 @@ private fun ExecutionDeskShortcutCard(
         }
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = "Open Execution Desk",
+            contentDescription = stringResource(R.string.cd_open_execution_desk),
             tint = palette.accentCyan,
             modifier = Modifier.size(18.dp)
         )

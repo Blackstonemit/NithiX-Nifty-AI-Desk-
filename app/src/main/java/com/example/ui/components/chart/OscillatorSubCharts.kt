@@ -24,10 +24,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.model.Candle
 import com.example.model.IndicatorConfig
 import com.example.model.IndicatorType
@@ -111,7 +113,11 @@ private fun SingleOscillatorPane(
         IndicatorType.VOLUME -> {
             val v = visCandles[inspectLocal].volume
             val rvol = String.format(Locale.US, "%.2fx", state.volumeProfile.rvolRatio)
-            if (v > 0L) "Vol ${formatCompactVol(v)} · RVOL $rvol" else "Index Spot (0 Cash Vol)"
+            if (v > 0L) {
+                stringResource(R.string.osc_vol_rvol_format, formatCompactVol(v), rvol)
+            } else {
+                stringResource(R.string.chart_index_spot_no_vol)
+            }
         }
         IndicatorType.RSI -> String.format(Locale.US, "%.1f", series.rsiSeries.getOrElse(inspectGlobal) { 50.0 })
         IndicatorType.MACD -> String.format(Locale.US, "H:%.2f", series.macdSeries.third.getOrElse(inspectGlobal) { 0.0 })

@@ -560,8 +560,8 @@ class McpPluginClient(
         }
         if (trimmed.startsWith("[")) {
             val arr = runCatching { JSONArray(trimmed) }.getOrNull() ?: return null
-            for (i in 0 until arr.length()) {
-                val obj = arr.optJSONObject(i) ?: continue
+            repeat(arr.length()) { i ->
+                val obj = arr.optJSONObject(i) ?: return@repeat
                 if (obj.optString("id") == expectedId || obj.has("result") || obj.has("error")) {
                     return obj
                 }
@@ -595,28 +595,26 @@ class McpPluginClient(
     internal fun parseToolsList(resultObj: JSONObject?): List<McpDiscoveredTool> {
         val toolsArr = resultObj?.optJSONArray("tools") ?: return emptyList()
         return buildList {
-            for (i in 0 until toolsArr.length()) {
-                val item = toolsArr.optJSONObject(i) ?: continue
-                val name = item.optString("name").takeIf { it.isNotBlank() } ?: continue
+            repeat(toolsArr.length()) { i ->
+                val item = toolsArr.optJSONObject(i) ?: return@repeat
+                val name = item.optString("name").takeIf { it.isNotBlank() } ?: return@repeat
                 val description = item.optString("description", "MCP Tool")
                 val inputSchema = item.optJSONObject("inputSchema")
-                val requiredList = mutableListOf<String>()
-                val reqArr = inputSchema?.optJSONArray("required")
-                if (reqArr != null) {
-                    for (r in 0 until reqArr.length()) {
-                        reqArr.optString(r).takeIf { it.isNotBlank() }?.let { requiredList.add(it) }
+                val requiredList = buildList {
+                    inputSchema?.optJSONArray("required")?.let { reqArr ->
+                        repeat(reqArr.length()) { r ->
+                            reqArr.optString(r).takeIf { it.isNotBlank() }?.let(::add)
+                        }
                     }
                 }
-                val propsObj = inputSchema?.optJSONObject("properties")
-                val propsMap = linkedMapOf<String, String>()
-                if (propsObj != null) {
-                    val keys = propsObj.keys()
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        val propDef = propsObj.optJSONObject(key)
-                        val type = propDef?.optString("type", "string").orEmpty()
-                        val desc = propDef?.optString("description", "").orEmpty()
-                        propsMap[key] = if (desc.isNotBlank()) "$type — $desc" else type
+                val propsMap = linkedMapOf<String, String>().apply {
+                    inputSchema?.optJSONObject("properties")?.let { propsObj ->
+                        propsObj.keys().forEach { key ->
+                            val propDef = propsObj.optJSONObject(key)
+                            val type = propDef?.optString("type", "string").orEmpty()
+                            val desc = propDef?.optString("description", "").orEmpty()
+                            this[key] = if (desc.isNotBlank()) "$type — $desc" else type
+                        }
                     }
                 }
                 add(
@@ -635,9 +633,9 @@ class McpPluginClient(
     internal fun parseResourcesList(resultObj: JSONObject?): List<McpDiscoveredResource> {
         val arr = resultObj?.optJSONArray("resources") ?: return emptyList()
         return buildList {
-            for (i in 0 until arr.length()) {
-                val item = arr.optJSONObject(i) ?: continue
-                val uri = item.optString("uri").takeIf { it.isNotBlank() } ?: continue
+            repeat(arr.length()) { i ->
+                val item = arr.optJSONObject(i) ?: return@repeat
+                val uri = item.optString("uri").takeIf { it.isNotBlank() } ?: return@repeat
                 add(
                     McpDiscoveredResource(
                         uri = uri,
@@ -653,9 +651,9 @@ class McpPluginClient(
     internal fun parsePromptsList(resultObj: JSONObject?): List<McpDiscoveredPrompt> {
         val arr = resultObj?.optJSONArray("prompts") ?: return emptyList()
         return buildList {
-            for (i in 0 until arr.length()) {
-                val item = arr.optJSONObject(i) ?: continue
-                val name = item.optString("name").takeIf { it.isNotBlank() } ?: continue
+            repeat(arr.length()) { i ->
+                val item = arr.optJSONObject(i) ?: return@repeat
+                val name = item.optString("name").takeIf { it.isNotBlank() } ?: return@repeat
                 add(
                     McpDiscoveredPrompt(
                         name = name,
@@ -670,11 +668,10 @@ class McpPluginClient(
         val contentArr = resultObj.optJSONArray("content")
         if (contentArr != null && contentArr.length() > 0) {
             val parts = buildList {
-                for (i in 0 until contentArr.length()) {
-                    val item = contentArr.optJSONObject(i) ?: continue
-                    val type = item.optString("type", "text")
-                    when (type) {
-                        "text" -> item.optString("text").takeIf { it.isNotBlank() }?.let { add(it) }
+                repeat(contentArr.length()) { i ->
+                    val item = contentArr.optJSONObject(i) ?: return@repeat
+                    when (item.optString("type", "text")) {
+                        "text" -> item.optString("text").takeIf { it.isNotBlank() }?.let(::add)
                         "resource" -> {
                             val res = item.optJSONObject("resource")
                             val txt = res?.optString("text")?.takeIf { it.isNotBlank() }

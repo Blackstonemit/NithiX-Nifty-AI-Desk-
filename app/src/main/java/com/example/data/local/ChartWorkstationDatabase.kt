@@ -10,6 +10,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "watchlist_symbols")
@@ -157,7 +159,7 @@ interface BacktestRunDao {
         BacktestRunEntity::class
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class ChartWorkstationDatabase : RoomDatabase() {
     abstract fun watchlistDao(): WatchlistDao
@@ -167,6 +169,16 @@ abstract class ChartWorkstationDatabase : RoomDatabase() {
     abstract fun backtestRunDao(): BacktestRunDao
 
     companion object {
+        /**
+         * Explicit forward-safe migration placeholder (zero fallbackToDestructiveMigration)
+         * so watchlist, layouts, drawings, encrypted LLM configs, and backtests are preserved across upgrades.
+         */
+        val MIGRATION_1_2: Migration = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_chart_drawings_symbol_timeframe ON chart_drawings(symbol, timeframe)")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ChartWorkstationDatabase? = null
 
@@ -176,7 +188,10 @@ abstract class ChartWorkstationDatabase : RoomDatabase() {
                     context.applicationContext,
                     ChartWorkstationDatabase::class.java,
                     "chart_workstation.db"
-                ).build().also { INSTANCE = it }
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
+                    .also { INSTANCE = it }
             }
         }
     }

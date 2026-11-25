@@ -124,9 +124,9 @@ fun CandlestickCanvas(
         )
 
         // 2. Render visible candlesticks only
-        for (localIdx in 0 until visibleCount) {
+        repeat(visibleCount) { localIdx ->
             val globalIdx = viewport.startIndex + localIdx
-            if (globalIdx !in candles.indices) continue
+            if (globalIdx !in candles.indices) return@repeat
 
             val candle = candles[globalIdx]
             val centerX = ChartScaleCalculator.visibleIndexToCenterX(
@@ -178,8 +178,8 @@ fun CandlestickCanvas(
                 add(0)
             } else {
                 val labelSlots = min(4, visibleCount - 1)
-                for (i in 0..labelSlots) {
-                    add((localIdxForFraction(i, labelSlots, visibleCount - 1)))
+                repeat(labelSlots + 1) { i ->
+                    add(localIdxForFraction(i, labelSlots, visibleCount - 1))
                 }
             }
         }.distinct()

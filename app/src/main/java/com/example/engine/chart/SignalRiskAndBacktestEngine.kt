@@ -192,13 +192,15 @@ object SignalRiskAndBacktestEngine {
         customStopLoss: Double?,
         atr14: Double,
         isLong: Boolean,
-        rewardRiskRatio: Double = 2.0
+        rewardRiskRatio: Double = 2.0,
+        lotSize: Int = 75
     ): RiskPositionPlan {
         val safeCap = capital.coerceAtLeast(1000.0)
         val safeRiskPct = riskPct.coerceIn(0.1, 20.0)
         val riskAmount = safeCap * (safeRiskPct / 100.0)
         val safeEntry = entryPrice.coerceAtLeast(1.0)
         val safeAtr = atr14.coerceAtLeast(safeEntry * 0.003)
+        val safeLotSize = lotSize.coerceAtLeast(1)
 
         val atrSl15 = if (isLong) safeEntry - 1.5 * safeAtr else safeEntry + 1.5 * safeAtr
         val atrSl20 = if (isLong) safeEntry - 2.0 * safeAtr else safeEntry + 2.0 * safeAtr
@@ -211,7 +213,7 @@ object SignalRiskAndBacktestEngine {
         val t3 = safeEntry + dir * riskPerUnit * 3.0
 
         val shares = (riskAmount / riskPerUnit).toInt().coerceAtLeast(1)
-        val lots = (riskAmount / (riskPerUnit * 75.0)).toInt().coerceAtLeast(1)
+        val lots = (riskAmount / (riskPerUnit * safeLotSize.toDouble())).toInt().coerceAtLeast(1)
         val positionValue = shares * safeEntry
 
         return RiskPositionPlan(
@@ -229,7 +231,8 @@ object SignalRiskAndBacktestEngine {
             recommendedNiftyLots = lots,
             positionValueInr = positionValue,
             rewardRiskRatio = rewardRiskRatio,
-            isLong = isLong
+            isLong = isLong,
+            lotSize = safeLotSize
         )
     }
 

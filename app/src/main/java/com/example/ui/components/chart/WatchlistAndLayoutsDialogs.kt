@@ -38,9 +38,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.local.SavedChartLayout
 import com.example.model.MarketSymbol
 import com.example.ui.theme.LocalChartPalette
@@ -60,7 +62,7 @@ fun WatchlistPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("NSE Watchlist & Symbol Search") },
+        title = { Text(stringResource(R.string.watchlist_dialog_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -74,7 +76,7 @@ fun WatchlistPickerDialog(
                     OutlinedTextField(
                         value = customInput,
                         onValueChange = { customInput = it },
-                        label = { Text("NSE Symbol (e.g. TATAMOTORS)", fontSize = 11.sp) },
+                        label = { Text(stringResource(R.string.watchlist_symbol_hint), fontSize = 11.sp) },
                         singleLine = true,
                         modifier = Modifier.weight(1f).testTag("watchlist_custom_symbol_input")
                     )
@@ -88,7 +90,7 @@ fun WatchlistPickerDialog(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = palette.accentCyan, contentColor = Color.Black)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add NSE symbol", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_nse_symbol), modifier = Modifier.size(16.dp))
                     }
                 }
 
@@ -111,21 +113,21 @@ fun WatchlistPickerDialog(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(sym.symbol, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (selected) palette.accentCyan else palette.textPrimary, style = TabularNumericStyle)
-                            Text("${sym.displayName} · ${sym.exchange}", fontSize = 10.sp, color = palette.textSecondary)
+                            Text(stringResource(R.string.watchlist_item_sub_format, sym.displayName, sym.exchange), fontSize = 10.sp, color = palette.textSecondary)
                         }
                         if (sym.symbol != "NIFTY 50") {
                             IconButton(
                                 onClick = { onRemoveSymbol(sym.symbol) },
                                 modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)
                             ) {
-                                Icon(Icons.Default.DeleteOutline, contentDescription = "Remove ${sym.symbol}", tint = palette.textMuted, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.cd_remove_symbol_format, sym.symbol), tint = palette.textMuted, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) } }
     )
 }
 
@@ -142,7 +144,7 @@ fun SavedLayoutsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Saved Chart Layouts & Templates") },
+        title = { Text(stringResource(R.string.layouts_dialog_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -156,7 +158,7 @@ fun SavedLayoutsDialog(
                     OutlinedTextField(
                         value = newName,
                         onValueChange = { newName = it },
-                        label = { Text("New Layout Name", fontSize = 11.sp) },
+                        label = { Text(stringResource(R.string.layouts_new_name_label), fontSize = 11.sp) },
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -169,7 +171,7 @@ fun SavedLayoutsDialog(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = palette.accentCyan, contentColor = Color.Black)
                     ) {
-                        Icon(Icons.Default.Save, contentDescription = "Save Layout", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Save, contentDescription = stringResource(R.string.cd_save_layout), modifier = Modifier.size(16.dp))
                     }
                 }
 
@@ -193,7 +195,7 @@ fun SavedLayoutsDialog(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(layout.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = palette.textPrimary)
                             Text(
-                                "${layout.chartType.shortLabel} · ${layout.themeMode.label} · $enabledCount indicators",
+                                stringResource(R.string.layouts_item_meta_format, layout.chartType.shortLabel, layout.themeMode.label, enabledCount),
                                 fontSize = 10.sp,
                                 color = palette.textSecondary,
                                 style = TabularNumericStyle
@@ -205,13 +207,13 @@ fun SavedLayoutsDialog(
                                 onClick = { onDeleteLayout(layout.id) },
                                 modifier = Modifier.minimumInteractiveComponentSize().size(32.dp)
                             ) {
-                                Icon(Icons.Default.DeleteOutline, contentDescription = "Delete layout", tint = palette.bearRed, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.DeleteOutline, contentDescription = stringResource(R.string.cd_delete_layout), tint = palette.bearRed, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) } }
     )
 }

@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.R
 import com.example.model.NseMcpState
 import com.example.ui.theme.LocalChartPalette
 import java.util.Locale
@@ -114,7 +116,7 @@ fun NseMcpDeskDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "NSE INDIA MODEL CONTEXT PROTOCOL",
+                                text = stringResource(R.string.nse_mcp_title),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Black,
                                 color = palette.textPrimary,
@@ -125,7 +127,7 @@ fun NseMcpDeskDialog(
                             Spacer(modifier = Modifier.height(2.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "nseindia.com/nse-mcp",
+                                    text = stringResource(R.string.nse_mcp_domain),
                                     fontSize = 9.5.sp,
                                     color = palette.accentCyan,
                                     fontFamily = FontFamily.Monospace,
@@ -146,7 +148,9 @@ fun NseMcpDeskDialog(
                                         .padding(horizontal = 5.dp, vertical = 1.dp)
                                 ) {
                                     Text(
-                                        text = if (mcpState.isConnected) "LIVE MCP" else "CACHED / OFFLINE",
+                                        text = stringResource(
+                                            if (mcpState.isConnected) R.string.nse_mcp_live_badge else R.string.nse_mcp_offline_badge
+                                        ),
                                         fontSize = 8.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = if (mcpState.isConnected) palette.bullGreen else palette.goldAccent,
@@ -166,7 +170,7 @@ fun NseMcpDeskDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.action_close),
                             tint = palette.textMuted,
                             modifier = Modifier.size(18.dp)
                         )
@@ -176,7 +180,13 @@ fun NseMcpDeskDialog(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Navigation Tabs
-                val tabTitles = listOf("Bhavcopy Data", "Index Tracker", "MCP Tools (5)", "RPC Logs", "Client Config")
+                val tabTitles = listOf(
+                    stringResource(R.string.nse_mcp_tab_bhavcopy),
+                    stringResource(R.string.nse_mcp_tab_index_tracker),
+                    stringResource(R.string.nse_mcp_tab_tools),
+                    stringResource(R.string.nse_mcp_tab_rpc_logs),
+                    stringResource(R.string.nse_mcp_tab_config)
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -249,7 +259,7 @@ private fun BhavcopyOverviewSection(
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
             Text(
-                text = "REGISTERED REMOTE MCP ENDPOINTS",
+                text = stringResource(R.string.nse_mcp_endpoints_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -259,9 +269,13 @@ private fun BhavcopyOverviewSection(
 
             // Endpoint 1: Bhavcopy
             EndpointRow(
-                name = "nse-bhavcopy",
+                name = stringResource(R.string.nse_mcp_endpoint_bhavcopy),
                 url = mcpState.endpointUrl,
-                status = if (mcpState.isConnected) "LIVE (${mcpState.latencyMs}ms)" else "OFFLINE / CACHED",
+                status = if (mcpState.isConnected) {
+                    stringResource(R.string.nse_mcp_status_live_format, mcpState.latencyMs)
+                } else {
+                    stringResource(R.string.nse_mcp_status_offline)
+                },
                 isGreen = mcpState.isConnected
             )
 
@@ -269,9 +283,11 @@ private fun BhavcopyOverviewSection(
 
             // Endpoint 2: CM Market
             EndpointRow(
-                name = "cm-market",
+                name = stringResource(R.string.nse_mcp_endpoint_cm),
                 url = mcpState.secondaryEndpointUrl,
-                status = if (mcpState.isConnected) "CONNECTED" else "STANDBY",
+                status = stringResource(
+                    if (mcpState.isConnected) R.string.nse_mcp_status_connected else R.string.nse_mcp_status_standby
+                ),
                 isGreen = mcpState.isConnected
             )
 
@@ -302,14 +318,14 @@ private fun BhavcopyOverviewSection(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                     Text(
-                        text = "OFFICIAL NSE BHAVCOPY SETTLEMENT",
+                        text = stringResource(R.string.nse_mcp_settlement_header),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = palette.goldAccent,
                         fontFamily = FontFamily.Monospace
                     )
                     Text(
-                        text = "Source: ${mcpState.endpointUrl}",
+                        text = stringResource(R.string.nse_mcp_source_format, mcpState.endpointUrl),
                         fontSize = 9.sp,
                         color = palette.textMuted,
                         fontFamily = FontFamily.Monospace,
@@ -346,7 +362,9 @@ private fun BhavcopyOverviewSection(
                         Spacer(modifier = Modifier.width(4.dp))
                     }
                     Text(
-                        text = if (mcpState.isSyncing) "Syncing..." else "Sync Bhavcopy",
+                        text = stringResource(
+                            if (mcpState.isSyncing) R.string.nse_mcp_syncing else R.string.nse_mcp_sync_bhavcopy
+                        ),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
@@ -369,16 +387,16 @@ private fun BhavcopyOverviewSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MetricBox(
-                        title = "CLOSE (LTP)",
-                        value = "₹${String.format(Locale.US, "%,.2f", record.close)}",
+                        title = stringResource(R.string.nse_mcp_metric_close_ltp),
+                        value = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", record.close)),
                         sub = "$deltaSign${String.format(Locale.US, "%.2f", delta)} ($deltaSign${String.format(Locale.US, "%.2f", deltaPct)}%)",
                         valueColor = deltaColor,
                         modifier = Modifier.weight(1f)
                     )
                     MetricBox(
-                        title = "PREV CLOSE",
-                        value = "₹${String.format(Locale.US, "%,.2f", record.prevClose)}",
-                        sub = "Previous Session",
+                        title = stringResource(R.string.nse_mcp_metric_prev_close),
+                        value = stringResource(R.string.label_inr_amount_format, String.format(Locale.US, "%,.2f", record.prevClose)),
+                        sub = stringResource(R.string.nse_mcp_prev_session),
                         valueColor = palette.textPrimary,
                         modifier = Modifier.weight(1f)
                     )
@@ -391,16 +409,16 @@ private fun BhavcopyOverviewSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     MetricBox(
-                        title = "DAY HIGH / LOW",
-                        value = "${record.high.toInt()} / ${record.low.toInt()}",
-                        sub = "Range: ${(record.high - record.low).toInt()} pts",
+                        title = stringResource(R.string.nse_mcp_metric_day_hl),
+                        value = stringResource(R.string.report_levels_pair_format, record.high.toInt(), record.low.toInt()),
+                        sub = stringResource(R.string.nse_mcp_range_pts_format, (record.high - record.low).toInt()),
                         valueColor = palette.textPrimary,
                         modifier = Modifier.weight(1f)
                     )
                     MetricBox(
-                        title = "DELIVERY %",
-                        value = "${String.format(Locale.US, "%.2f", record.deliveryPct)}%",
-                        sub = "${record.deliveryQty / 1000000}M Shares",
+                        title = stringResource(R.string.nse_mcp_metric_delivery),
+                        value = stringResource(R.string.options_iv_pct_format, String.format(Locale.US, "%.2f", record.deliveryPct)),
+                        sub = stringResource(R.string.nse_mcp_shares_m_format, record.deliveryQty / 1000000),
                         valueColor = palette.bullGreen,
                         modifier = Modifier.weight(1f)
                     )
@@ -421,13 +439,13 @@ private fun BhavcopyOverviewSection(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Date: ${record.tradeDate}",
+                            text = stringResource(R.string.nse_mcp_date_format, record.tradeDate),
                             fontSize = 10.sp,
                             color = palette.textSecondary,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "Total Value: ₹${String.format(Locale.US, "%,.0f", tradedCr)} Cr",
+                            text = stringResource(R.string.nse_mcp_total_val_cr_format, String.format(Locale.US, "%,.0f", tradedCr)),
                             fontSize = 10.sp,
                             color = palette.goldAccent,
                             fontWeight = FontWeight.Bold,
@@ -452,7 +470,7 @@ private fun BhavcopyOverviewSection(
     ) {
         Column {
             Text(
-                text = "NSE INDIA MODEL CONTEXT PROTOCOL (MCP) COMPLIANCE",
+                text = stringResource(R.string.nse_mcp_compliance_title),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.goldAccent,
@@ -460,7 +478,7 @@ private fun BhavcopyOverviewSection(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Official endpoint provided by NSE India under standard terms for informational & research purposes. Integrates with AI assistants, multi-agent research desks, and autonomous trading decision engines.",
+                text = stringResource(R.string.nse_mcp_compliance_body),
                 fontSize = 9.sp,
                 color = palette.textSecondary,
                 lineHeight = 13.sp
@@ -485,7 +503,7 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
             ) {
                 Column {
                     Text(
-                        text = "NSE INDEX TRACKER: ${indexTracker.indexName}",
+                        text = stringResource(R.string.nse_mcp_index_tracker_format, indexTracker.indexName),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = palette.accentCyan,
@@ -521,7 +539,7 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
 
             // Advances vs Declines Market Breadth
             Text(
-                text = "MARKET BREADTH (NIFTY 50 CONSTITUENTS)",
+                text = stringResource(R.string.nse_mcp_breadth_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -533,14 +551,14 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${indexTracker.advances} Advances",
+                    text = stringResource(R.string.nse_mcp_advances_format, indexTracker.advances),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.bullGreen,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
-                    text = "${indexTracker.declines} Declines",
+                    text = stringResource(R.string.nse_mcp_declines_format, indexTracker.declines),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = palette.bearRed,
@@ -575,7 +593,7 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
 
             // Valuation Metrics: P/E, P/B, Div Yield
             Text(
-                text = "INDEX VALUATION RATIOS (OFFICIAL NSE)",
+                text = stringResource(R.string.nse_mcp_valuation_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -588,23 +606,23 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 MetricBox(
-                    title = "P/E RATIO",
+                    title = stringResource(R.string.nse_mcp_pe_ratio),
                     value = "${indexTracker.peRatio}",
-                    sub = "Fair: 20-22",
+                    sub = stringResource(R.string.nse_mcp_pe_fair),
                     valueColor = palette.goldAccent,
                     modifier = Modifier.weight(1f)
                 )
                 MetricBox(
-                    title = "P/B RATIO",
+                    title = stringResource(R.string.nse_mcp_pb_ratio),
                     value = "${indexTracker.pbRatio}",
-                    sub = "Book Mult",
+                    sub = stringResource(R.string.nse_mcp_pb_sub),
                     valueColor = palette.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 MetricBox(
-                    title = "DIV YIELD",
-                    value = "${indexTracker.divYield}%",
-                    sub = "Annual Yield",
+                    title = stringResource(R.string.nse_mcp_div_yield),
+                    value = stringResource(R.string.options_iv_pct_format, "${indexTracker.divYield}"),
+                    sub = stringResource(R.string.nse_mcp_div_sub),
                     valueColor = palette.bullGreen,
                     modifier = Modifier.weight(1f)
                 )
@@ -614,7 +632,7 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
 
             // 52-Week Range Bar
             Text(
-                text = "52-WEEK RANGE (21,281 - 26,277)",
+                text = stringResource(R.string.nse_mcp_52w_range),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -625,16 +643,32 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Low: ${indexTracker.yearLow.toInt()}", fontSize = 9.sp, color = palette.textMuted, fontFamily = FontFamily.Monospace)
-                Text(text = "LTP: ${indexTracker.ltp.toInt()}", fontSize = 9.sp, color = palette.accentCyan, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                Text(text = "High: ${indexTracker.yearHigh.toInt()}", fontSize = 9.sp, color = palette.textMuted, fontFamily = FontFamily.Monospace)
+                Text(
+                    text = stringResource(R.string.nse_mcp_low_format, indexTracker.yearLow.toInt()),
+                    fontSize = 9.sp,
+                    color = palette.textMuted,
+                    fontFamily = FontFamily.Monospace
+                )
+                Text(
+                    text = stringResource(R.string.nse_mcp_ltp_format, indexTracker.ltp.toInt()),
+                    fontSize = 9.sp,
+                    color = palette.accentCyan,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
+                Text(
+                    text = stringResource(R.string.nse_mcp_high_format, indexTracker.yearHigh.toInt()),
+                    fontSize = 9.sp,
+                    color = palette.textMuted,
+                    fontFamily = FontFamily.Monospace
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Top Weightage Point Contributors
             Text(
-                text = "TOP INDEX POINT CONTRIBUTORS (HEAVYWEIGHTS)",
+                text = stringResource(R.string.nse_mcp_heavyweights_header),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -664,7 +698,7 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "wt ${item.weightPct}%",
+                                text = stringResource(R.string.nse_mcp_weight_pct_format, "${item.weightPct}"),
                                 fontSize = 9.sp,
                                 color = palette.textMuted,
                                 fontFamily = FontFamily.Monospace
@@ -686,7 +720,11 @@ private fun IndexTrackerSection(indexTracker: com.example.model.NseIndexTrackerS
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "${if (item.pointContribution >= 0) "+" else ""}${item.pointContribution} pts",
+                            text = stringResource(
+                                R.string.nse_mcp_pts_format,
+                                if (item.pointContribution >= 0) "+" else "",
+                                "${item.pointContribution}"
+                            ),
                             fontSize = 9.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = if (item.pointContribution >= 0) palette.bullGreen else palette.bearRed,
@@ -704,7 +742,7 @@ private fun McpToolsSection(mcpState: NseMcpState) {
     val palette = LocalChartPalette.current
     Column {
         Text(
-            text = "DISCOVERED MCP TOOLS ON ${mcpState.endpointUrl}",
+            text = stringResource(R.string.nse_mcp_discovered_tools_format, mcpState.endpointUrl),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -745,7 +783,7 @@ private fun McpToolsSection(mcpState: NseMcpState) {
                     )
                     Spacer(modifier = Modifier.height(3.dp))
                     Text(
-                        text = "Params: ${tool.parametersDescription}",
+                        text = stringResource(R.string.nse_mcp_params_format, tool.parametersDescription),
                         fontSize = 9.sp,
                         color = palette.textMuted,
                         fontFamily = FontFamily.Monospace
@@ -761,7 +799,7 @@ private fun McpRpcLogsSection(mcpState: NseMcpState) {
     val palette = LocalChartPalette.current
     Column {
         Text(
-            text = "STREAMABLE HTTP / JSON-RPC 2.0 AUDIT LOGS",
+            text = stringResource(R.string.nse_mcp_rpc_logs_header),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -771,7 +809,7 @@ private fun McpRpcLogsSection(mcpState: NseMcpState) {
 
         if (mcpState.logs.isEmpty()) {
             Text(
-                text = "No RPC logs captured yet. Tap 'Sync Bhavcopy' to trigger an MCP call.",
+                text = stringResource(R.string.nse_mcp_no_rpc_logs),
                 fontSize = 11.sp,
                 color = palette.textMuted
             )
@@ -849,7 +887,7 @@ private fun McpConfigSection(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    text = "Manage Custom MCP Plugins (Settings → Connectors)",
+                    text = stringResource(R.string.nse_mcp_manage_custom_plugins),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -858,7 +896,7 @@ private fun McpConfigSection(
         }
 
         Text(
-            text = "MCP CLIENT CONFIGURATION (CLAUDE / CUSTOM AGENTS)",
+            text = stringResource(R.string.nse_mcp_client_config_header),
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
             color = palette.textSecondary,
@@ -867,7 +905,7 @@ private fun McpConfigSection(
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "To configure official NSE MCP in Claude Desktop or external agents, paste the following JSON config according to https://www.nseindia.com/nse-mcp:",
+            text = stringResource(R.string.nse_mcp_client_config_desc),
             fontSize = 10.sp,
             color = palette.textPrimary
         )

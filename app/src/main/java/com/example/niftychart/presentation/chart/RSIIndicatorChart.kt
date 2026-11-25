@@ -30,10 +30,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.niftychart.domain.model.RsiSeries
 import com.example.ui.theme.LocalChartPalette
 import com.example.ui.theme.TabularNumericStyle
@@ -71,10 +73,10 @@ fun RSIIndicatorChart(
 
     val displayedRsi = selectedGlobalIndex?.let { rsiSeries.values.getOrNull(it) } ?: rsiSeries.latestValue
     val zoneLabel = when {
-        displayedRsi == null -> "N/A"
-        displayedRsi >= rsiSeries.overboughtLevel -> "OB"
-        displayedRsi <= rsiSeries.oversoldLevel -> "OS"
-        else -> "NEUTRAL"
+        displayedRsi == null -> stringResource(R.string.rsi_zone_na)
+        displayedRsi >= rsiSeries.overboughtLevel -> stringResource(R.string.rsi_zone_ob)
+        displayedRsi <= rsiSeries.oversoldLevel -> stringResource(R.string.rsi_zone_os)
+        else -> stringResource(R.string.rsi_zone_neutral)
     }
     val zoneColor = when {
         displayedRsi == null -> palette.textMuted
@@ -100,7 +102,7 @@ fun RSIIndicatorChart(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "RSI (${rsiSeries.period}) • WILDER",
+                text = stringResource(R.string.rsi_chart_header_format, rsiSeries.period),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = palette.textSecondary,
@@ -199,28 +201,29 @@ fun RSIIndicatorChart(
 
             if (viewport.visibleCount <= 0 || rsiSeries.values.isEmpty()) return@Canvas
 
-            val path = Path()
-            var hasStarted = false
+            val path = Path().apply {
+                var hasStarted = false
 
-            for (localIdx in 0 until viewport.visibleCount) {
-                val globalIdx = viewport.startIndex + localIdx
-                val rsiVal = rsiSeries.values.getOrNull(globalIdx)
-                if (rsiVal == null || !rsiVal.isFinite()) {
-                    hasStarted = false
-                    continue
-                }
-                val x = ChartScaleCalculator.visibleIndexToCenterX(
-                    visibleIndex = localIdx,
-                    visibleCount = viewport.visibleCount,
-                    plotLeftPx = plotLeft,
-                    plotWidthPx = plotWidth
-                )
-                val y = ChartScaleCalculator.rsiToY(rsiVal, plotTop, plotHeight)
-                if (!hasStarted) {
-                    path.moveTo(x, y)
-                    hasStarted = true
-                } else {
-                    path.lineTo(x, y)
+                repeat(viewport.visibleCount) { localIdx ->
+                    val globalIdx = viewport.startIndex + localIdx
+                    val rsiVal = rsiSeries.values.getOrNull(globalIdx)
+                    if (rsiVal == null || !rsiVal.isFinite()) {
+                        hasStarted = false
+                        return@repeat
+                    }
+                    val x = ChartScaleCalculator.visibleIndexToCenterX(
+                        visibleIndex = localIdx,
+                        visibleCount = viewport.visibleCount,
+                        plotLeftPx = plotLeft,
+                        plotWidthPx = plotWidth
+                    )
+                    val y = ChartScaleCalculator.rsiToY(rsiVal, plotTop, plotHeight)
+                    if (!hasStarted) {
+                        moveTo(x, y)
+                        hasStarted = true
+                    } else {
+                        lineTo(x, y)
+                    }
                 }
             }
 

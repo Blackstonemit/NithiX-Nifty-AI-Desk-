@@ -48,10 +48,12 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.engine.chart.TimeframeAggregationEngine
 import com.example.model.Candle
 import com.example.model.ChartAnchorPoint
@@ -95,6 +97,8 @@ fun ChartCanvasViewport(
 
     val palette = LocalChartPalette.current
     val density = LocalDensity.current
+    val pocLabel = stringResource(R.string.canvas_label_poc)
+    val defaultNoteLabel = stringResource(R.string.canvas_default_note)
     val rightAxisMarginPx = remember(density) { with(density) { 54.dp.toPx() } }
 
     val visCount = state.visibleCandleCount.coerceIn(12, min(250, candlesAll.size))
@@ -346,7 +350,7 @@ fun ChartCanvasViewport(
                         strokeWidth = 1.6f,
                         pathEffect = dash
                     )
-                    drawContext.canvas.nativeCanvas.drawText("POC", 8f, pocY - 4f, overlayLabelPaint)
+                    drawContext.canvas.nativeCanvas.drawText(pocLabel, 8f, pocY - 4f, overlayLabelPaint)
                 }
             }
 
@@ -615,7 +619,7 @@ fun ChartCanvasViewport(
                         }
                         DrawingToolType.TEXT_NOTE -> {
                             drawCircle(col, 5f, Offset(x0, y0))
-                            drawContext.canvas.nativeCanvas.drawText(d.text.ifBlank { "Note" }, x0 + 8f, y0 - 4f, overlayLabelPaint)
+                            drawContext.canvas.nativeCanvas.drawText(d.text.ifBlank { defaultNoteLabel }, x0 + 8f, y0 - 4f, overlayLabelPaint)
                         }
                         DrawingToolType.TRENDLINE, DrawingToolType.ARROW_CALLOUT -> {
                             val p1 = d.points.getOrNull(1) ?: return@forEach
@@ -774,16 +778,16 @@ fun ChartCanvasViewport(
                             onClick = { onSelectVisibleIndex(null) },
                             modifier = Modifier.minimumInteractiveComponentSize().size(22.dp)
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Dismiss OHLC popup", tint = palette.textMuted, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_dismiss_ohlc), tint = palette.textMuted, modifier = Modifier.size(14.dp))
                         }
                     }
-                    OhlcLine("O", c.open, palette.textPrimary)
-                    OhlcLine("H", c.high, palette.bullGreen)
-                    OhlcLine("L", c.low, palette.bearRed)
-                    OhlcLine("C", c.close, acc)
+                    OhlcLine(stringResource(R.string.label_open_short), c.open, palette.textPrimary)
+                    OhlcLine(stringResource(R.string.label_high_short), c.high, palette.bullGreen)
+                    OhlcLine(stringResource(R.string.label_low_short), c.low, palette.bearRed)
+                    OhlcLine(stringResource(R.string.label_close_short), c.close, acc)
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = "Vol ${c.volume}",
+                        text = stringResource(R.string.chart_vol_format, c.volume.toString()),
                         fontSize = 9.sp,
                         color = palette.textSecondary,
                         style = TabularNumericStyle
